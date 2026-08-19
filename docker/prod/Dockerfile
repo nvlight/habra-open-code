@@ -9,7 +9,9 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     libxml2-dev \
-    && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml
+    linux-headers \
+    && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml \
+    && pecl install redis && docker-php-ext-enable redis
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -29,9 +31,11 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     libxml2-dev \
+    linux-headers \
     supervisor \
     fcgi \
     && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml \
+    && pecl install redis && docker-php-ext-enable redis \
     && rm -rf /tmp/*
 
 COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
