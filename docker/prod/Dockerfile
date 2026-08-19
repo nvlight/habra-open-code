@@ -31,14 +31,12 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     libxml2-dev \
-    linux-headers \
     supervisor \
     fcgi \
-    && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml \
-    && pecl install redis && docker-php-ext-enable redis \
-    && rm -rf /tmp/*
+    && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml
 
-COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 
 COPY docker/prod/php.ini /usr/local/etc/php/conf.d/app.ini
 COPY docker/prod/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
