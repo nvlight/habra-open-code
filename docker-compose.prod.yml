@@ -4,6 +4,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - VPS_IP=${VPS_IP}
     volumes:
       - ./docker/prod/nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - certbot_certs:/etc/letsencrypt:ro
