@@ -8,7 +8,7 @@ services:
       - VPS_IP=${VPS_IP}
     volumes:
       - ./docker/prod/nginx.conf:/etc/nginx/templates/default.conf.template:ro
-      - certbot_certs:/etc/letsencrypt:ro
+      - ./docker/prod/letsencrypt:/etc/letsencrypt:ro
       - app_storage:/var/www/html/storage:ro
       - app_bootstrap:/var/www/html/bootstrap/cache:ro
     depends_on:
@@ -60,12 +60,12 @@ services:
   certbot:
     image: certbot/certbot
     volumes:
-      - certbot_certs:/etc/letsencrypt
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 43200 & wait $${!}; done;'"
+      - ./docker/prod/letsencrypt:/etc/letsencrypt
+      - ./docker/prod/certbot-var:/var/lib/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --preferred-profile shortlived; sleep 43200 & wait $${!}; done;'"
 
 volumes:
   postgres_data:
   redis_data:
-  certbot_certs:
   app_storage:
   app_bootstrap:
