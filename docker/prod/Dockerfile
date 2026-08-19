@@ -13,7 +13,13 @@ RUN apk add --no-cache \
     autoconf \
     g++ \
     make \
-    && pecl install redis && docker-php-ext-enable redis \
+    && mkdir -p /tmp/redis && cd /tmp/redis \
+    && curl -sSL https://pecl.php.net/get/redis-6.3.0.tgz -o redis.tgz \
+    && tar xzf redis.tgz \
+    && cd redis-6.3.0 \
+    && phpize && ./configure && make -j$(nproc) && make install \
+    && docker-php-ext-enable redis \
+    && cd / && rm -rf /tmp/redis \
     && docker-php-ext-install pdo_pgsql pcntl zip bcmath mbstring xml
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
