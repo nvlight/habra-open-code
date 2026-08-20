@@ -1,10 +1,10 @@
 <?php
 
-uses(RefreshDatabase::class);
-
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+
+uses(RefreshDatabase::class);
 
 it('can create a user', function () {
     $user = User::factory()->create([
