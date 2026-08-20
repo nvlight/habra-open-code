@@ -1,8 +1,10 @@
 <?php
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 
 it('can create a user', function () {
     $user = User::factory()->create([
@@ -29,5 +31,5 @@ it('casts email_verified_at to datetime and hashes password', function () {
     ]);
 
     // password уже hashed благодаря cast
-    expect($user->email_verified_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class);
+    expect($user->email_verified_at)->toBeInstanceOf(Carbon::class);
 });
