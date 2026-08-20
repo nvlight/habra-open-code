@@ -1,4 +1,3 @@
-node_modules
 vendor
 .git
 .github
@@ -17,4 +16,4 @@ build
 storage/framework/views
 storage/logs
 storage/app/public
-public/build
+

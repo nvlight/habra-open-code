@@ -7,7 +7,6 @@ This is a **Laravel 13** web application scaffold (fresh installation, no custom
 ## Tech Stack
 
 - **Backend**: PHP 8.3+, Laravel 13.17
-- **Frontend**: Vite 8, Tailwind CSS 4, Alpine.js (optional via Laravel)
 - **Database**: PostgreSQL (dev: v18 via Sail, prod: v16), SQLite for testing
 - **Queue/Cache**: Redis (production), database driver (local dev)
 - **Auth**: Laravel Sanctum (API token + SPA stateful auth)
@@ -34,12 +33,8 @@ docker/prod/
   nginx.conf           # API-only nginx + TLS (Let's Encrypt IP cert)
   supervisord.conf     # FPM + queue:work + scheduler
   php.ini              # OPcache 256MB, JIT 128MB
-resources/
-  css/app.css          # Tailwind CSS entry (v4 syntax: @import 'tailwindcss')
-  js/app.js            # JS entry (empty)
-  views/               # welcome.blade.php only
 routes/
-  web.php              # Single route: GET / -> welcome view
+  web.php              # Single route: GET / -> empty HTML response
   api.php              # Single route: GET /api/user (auth:sanctum)
   console.php          # Single artisan command: inspire
 tests/
@@ -48,7 +43,7 @@ tests/
     ExampleTest.php    # Returns a successful response (Pest syntax)
   Unit/
     ExampleTest.php    # Asserts that true is true (Pest syntax)
-.dockerignore          # Excludes vendor, node_modules, .git, .env.*, etc.
+.dockerignore          # Excludes vendor, .git, .env.*, etc.
 .env.production        # Production env template (Redis for session/cache/queue)
 docker-compose.prod.yml # nginx, app, postgres, redis, certbot
 phpstan.neon.dist      # Larastan level 5, analyzes app/ directory
@@ -60,7 +55,7 @@ phpstan.neon.dist      # Larastan level 5, analyzes app/ directory
 # First-time setup (installs deps, copies .env, generates key, runs migrations)
 composer setup
 
-# Start development server (with Vite hot-reload)
+# Start development server
 composer dev
 # OR
 php artisan dev
