@@ -14,6 +14,15 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('login')->unique();
+            $table->text('about')->nullable();
+            $table->string('avatar')->nullable();
+            $table->integer('karma')->default(0);
+            $table->decimal('rating', 10)->default(0);
+            $table->string('location')->nullable();
+            $table->unsignedBigInteger('company_id')->nullable()->index();
+            $table->foreignId('invited_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->json('feed_settings')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
