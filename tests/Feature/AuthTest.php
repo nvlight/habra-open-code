@@ -70,3 +70,46 @@ it('revokes token on logout', function () {
 
     $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
 });
+
+it('updates profile and persists feed settings', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user, 'sanctum')
+        ->putJson('/api/profile', [
+            'name' => 'Новое имя',
+            'about' => 'Backend-разработчик',
+            'location' => 'Тбилиси, Грузия',
+            'feed_settings' => [
+                'types' => ['article'],
+                'difficulties' => ['medium', 'hard'],
+                'min_rating' => 25,
+            ],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Новое имя')
+        ->assertJsonPath('data.location', 'Тбилиси, Грузия');
+
+    expect($user->refresh()->feed_settings)->toEqual([
+        'types' => ['article'],
+        'difficulties' => ['medium', 'hard'],
+        'min_rating' => 25,
+    ]);
+});
+
+it('validates feed settings on profile update', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user, 'sanctum')
+        ->putJson('/api/profile', [
+            'feed_settings' => [
+                'types' => ['poem'],
+                'min_rating' => -5,
+            ],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['feed_settings.types.0', 'feed_settings.min_rating']);
+});
+
+it('requires authentication for profile update', function () {
+    $this->putJson('/api/profile', ['name' => 'Злоумышленник'])->assertUnauthorized();
+});
