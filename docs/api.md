@@ -1,43 +1,43 @@
 # API Reference
 
-Backend-клон Хабра на Laravel 13. Все запросы идут к префиксу `/api`, формат — JSON.
+A backend clone of Habr built on Laravel 13. All requests go to the `/api` prefix; the format is JSON.
 
-## Аутентификация
+## Authentication
 
-Sanctum Bearer-токены. Токен выдаётся при регистрации/логине и передаётся в заголовке:
+Sanctum bearer tokens. A token is issued on registration/login and sent in the header:
 
 ```
 Authorization: Bearer <token>
 ```
 
-Логин работает **и по email, и по логину**. Эндпоинты с 🔒 требуют авторизации (иначе `401`).
+Login works with **either email or login**. Endpoints marked with 🔒 require authentication (otherwise `401`).
 
-## Пагинация
+## Pagination
 
-Все списки пагинируются Laravel'ом (`?page=2&per_page=20`, `per_page` ≤ 100):
+All lists use Laravel pagination (`?page=2&per_page=20`, `per_page` ≤ 100):
 
 ```json
 {
-  "data": [ /* элементы */ ],
+  "data": [ /* items */ ],
   "links": { "first": "...", "last": "...", "prev": null, "next": "..." },
   "meta": { "current_page": 1, "last_page": 3, "per_page": 20, "total": 58 }
 }
 ```
 
-## Коды ошибок
+## Error Codes
 
-| Код | Когда |
+| Code | When |
 |---|---|
-| `401` | Нет/просрочен токен или неверные учётные данные |
-| `403` | Действие запрещено (например, чужая публикация) |
-| `404` | Объект не найден; draft-публикация для неавтора |
-| `422` | Ошибка валидации: `{"message": "...", "errors": {"field": ["..."]}}` |
+| `401` | Missing/expired token or invalid credentials |
+| `403` | Forbidden (e.g. someone else's publication) |
+| `404` | Not found; a draft publication for anyone but its author |
+| `422` | Validation error: `{"message": "...", "errors": {"field": ["..."]}}` |
 
 ---
 
 ## Auth — `app/Http/Controllers/Api/AuthController.php`
 
-### Регистрация
+### Register
 
 ```http
 POST /api/auth/register
@@ -45,7 +45,7 @@ POST /api/auth/register
 
 ```json
 {
-  "name": "Иван Тестов",
+  "name": "Ivan Testov",
   "login": "ivan_test",
   "email": "ivan@test.dev",
   "password": "secret1234",
@@ -53,65 +53,65 @@ POST /api/auth/register
 }
 ```
 
-`201` → пользователь + токен:
+`201` → user + token:
 
 ```json
 {
-  "user": { "id": 25, "login": "ivan_test", "name": "Иван Тестов", "rating": "0" },
+  "user": { "id": 25, "login": "ivan_test", "name": "Ivan Testov", "rating": "0" },
   "token": "12|XyZ..."
 }
 ```
 
-### Вход
+### Login
 
 ```http
 POST /api/auth/login
 { "login": "admin", "password": "password" }
 ```
 
-`login` — email **или** логин. `200` → `{ user, token }`. Неверные данные → `401`.
+`login` accepts an email **or** a login name. `200` → `{ user, token }`. Invalid credentials → `401`.
 
-### Выход 🔒
+### Logout 🔒
 
 ```http
 POST /api/auth/logout
 ```
 
-Отзывает текущий токен → `{ "message": "Вы вышли из системы" }`.
+Revokes the current token → `{ "message": "Вы вышли из системы" }`.
 
-### Текущий профиль 🔒
+### Current profile 🔒
 
 ```http
 GET /api/me
 ```
 
-→ `UserResource` со счётчиками публикаций/комментариев/подписчиков.
+→ `UserResource` with publication/comment/follower counters.
 
 ---
 
 ## Publications
 
-Единый ресурс для статей/постов/новостей. Идентификатор — числовой `id` (как нумерация `/ru/articles/1072300/` на Хабре).
+A single resource for articles/posts/news. Identifier is a numeric `id` (mirroring habr.com's `/ru/articles/1072300/` numbering).
 
-### Список (публично)
+### List (public)
 
 ```http
 GET /api/publications?type=article&hub=programming&company=timeweb&author=SLY_G&difficulty=medium&label=tutorial&min_rating=10&sort=best&status=published&per_page=20&page=1
 ```
 
-| Параметр | Значения | По умолчанию |
+| Parameter | Values | Default |
 |---|---|---|
-| `type` | `article` \| `post` \| `news` | все |
-| `hub` | alias хаба (`python`) | все |
-| `company` | slug компании (`timeweb`) | все |
-| `author` | логин автора | все |
-| `difficulty` | `easy` \| `medium` \| `hard` | все |
-| `label` | метка (`tutorial`, `case`…) | все |
-| `min_rating` | целое ≥ рейтинга | без фильтра |
-| `sort` | `new` (по дате) \| `best` (по рейтингу) | `new` |
+| `type` | `article` \| `post` \| `news` | all |
+| `hub` | hub alias (`python`) | all |
+| `company` | company slug (`timeweb`) | all |
+| `author` | author login | all |
+| `difficulty` | `easy` \| `medium` \| `hard` | all |
+| `label` | label (`tutorial`, `case`…) | all |
+| `min_rating` | integer ≥ rating | no filter |
+| `sort` | `new` (by date) \| `best` (by rating) | `new` |
 | `status` | `published` \| `sandbox` | `published` |
 
-Элемент списка (краткий ресурс, без `body`):
+List item (compact resource, without `body`):
 
 ```json
 {
@@ -145,17 +145,19 @@ GET /api/publications?type=article&hub=programming&company=timeweb&author=SLY_G&
 }
 ```
 
-Песочница: `GET /api/publications?status=sandbox`.
+> Field values such as titles and labels are sample data seeded from the Russian-language Habr UI.
 
-### Просмотр (публично)
+Sandbox listing: `GET /api/publications?status=sandbox`.
+
+### Show (public)
 
 ```http
 GET /api/publications/{id}
 ```
 
-→ то же + `body`, `source_url`, `created_at`, `updated_at`. Увеличивает `views_count`. Draft видит только автор.
+→ same as above plus `body`, `source_url`, `created_at`, `updated_at`. Increments `views_count`. A draft is visible only to its author.
 
-### Создание 🔒
+### Create 🔒
 
 ```http
 POST /api/publications
@@ -179,48 +181,48 @@ POST /api/publications
 }
 ```
 
-- `title`, `body`, `type` — обязательны;
-- `status` — только `draft` (по умолчанию) или `sandbox`;
-- `hubs` — массив id хабов (≤ 5); `tags` — массив строк (≤ 10), теги создаются на лету;
-- корпоративная публикация: `company_id` компании, где вы сотрудник.
+- `title`, `body`, `type` — required;
+- `status` — only `draft` (default) or `sandbox`;
+- `hubs` — array of hub ids (≤ 5); `tags` — array of strings (≤ 10), tags are created on the fly;
+- corporate post: pass the `company_id` of a company you are an employee of.
 
-`201` → полный ресурс.
+`201` → full resource.
 
-### Обновление 🔒 (только автор)
+### Update 🔒 (author only)
 
 ```http
 PUT|PATCH /api/publications/{id}
 ```
 
-Те же поля, кроме `type` и `status`; повторная передача `hubs`/`tags` полностью пересинхронизирует их.
+Same fields except `type` and `status`; re-sending `hubs`/`tags` fully re-syncs them.
 
-### Удаление 🔒 (только автор)
+### Delete 🔒 (author only)
 
 ```http
 DELETE /api/publications/{id}   →  { "message": "Публикация удалена" }
 ```
 
-### Публикация 🔒 (только автор)
+### Publish 🔒 (author only)
 
 ```http
 POST /api/publications/{id}/publish
 ```
 
-Переводит draft/sandbox в `published`, ставит `published_at`.
+Moves draft/sandbox to `published` and sets `published_at`.
 
 ---
 
 ## Comments
 
-Дерево комментариев: `parent_id` ссылается на комментарий той же публикации.
+Comment tree: `parent_id` references a comment of the same publication.
 
-### Список (публично)
+### List (public)
 
 ```http
 GET /api/publications/{publication}/comments
 ```
 
-Возвращает только корневые комментарии с вложенными `replies` (глубина 3 уровня):
+Returns only top-level comments with nested `replies` (3 levels deep):
 
 ```json
 [
@@ -244,28 +246,28 @@ GET /api/publications/{publication}/comments
 ]
 ```
 
-### Создание 🔒
+### Create 🔒
 
 ```http
 POST /api/publications/{publication}/comments
 { "body": "Мой комментарий", "parent_id": null }
 ```
 
-`201` → созданный комментарий; увеличивает `comments_count` публикации. Ответ на чужой комментарий из другой публикации → `404`.
+`201` → created comment; increments the publication's `comments_count`. Replying to a comment that belongs to another publication → `404`.
 
-### Удаление 🔒 (только автор)
+### Delete 🔒 (author only)
 
 ```http
 DELETE /api/comments/{comment}   →  { "message": "Комментарий удалён" }
 ```
 
-Пересчитывает `comments_count` публикации (ответы удаляются каскадно).
+Recalculates the publication's `comments_count` (replies are cascade-deleted).
 
 ---
 
 ## Votes
 
-Тело всех голосов: `{ "value": 1 }` или `{ "value": -1 }`. Повторное поведение описано в [domain.md](domain.md#голосование): тот же голос снимается, противоположный — переключается.
+All votes share the body `{ "value": 1 }` or `{ "value": -1 }`. Repeated voting behavior is described in [domain.md](domain.md#voting): voting the same value again removes the vote, the opposite value switches it.
 
 ```http
 POST /api/publications/{publication}/vote   →  { "rating": 14, "votes_up": 16, "votes_down": 2 }
@@ -278,26 +280,26 @@ POST /api/users/{user}/karma                →  { "karma": 1133 }
 ## Bookmarks
 
 ```http
-POST   /api/publications/{publication}/bookmark   🔒  добавить
-DELETE /api/publications/{publication}/bookmark   🔒  убрать
-GET    /api/bookmarks                             🔒  мои закладки (список публикаций)
+POST   /api/publications/{publication}/bookmark   🔒  add
+DELETE /api/publications/{publication}/bookmark   🔒  remove
+GET    /api/bookmarks                             🔒  my bookmarks (list of publications)
 ```
 
-Повторное добавление не дублируется; `bookmarks_count` публикации обновляется автоматически.
+Adding twice never duplicates; the publication's `bookmarks_count` updates automatically.
 
 ---
 
 ## Subscriptions
 
-Подписка на пользователя, хаб или компанию. `key` — числовой id **или** естественный ключ: логин / alias / slug.
+Subscribe to a user, hub, or company. `key` is either a numeric id **or** the natural key: login / alias / slug.
 
 ```http
-POST   /api/subscriptions/{type}/{key}     🔒  подписаться
-DELETE /api/subscriptions/{type}/{key}     🔒  отписаться
-GET    /api/subscriptions                  🔒  мои подписки по группам
+POST   /api/subscriptions/{type}/{key}     🔒  subscribe
+DELETE /api/subscriptions/{type}/{key}     🔒  unsubscribe
+GET    /api/subscriptions                  🔒  my subscriptions grouped by type
 ```
 
-`type`: `user` | `hub` | `company`. Примеры:
+`type`: `user` | `hub` | `company`. Examples:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $TOKEN" https://host/api/subscriptions/hub/python
@@ -305,7 +307,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" https://host/api/subscriptions/us
 curl -X DELETE -H "Authorization: Bearer $TOKEN" https://host/api/subscriptions/company/timeweb
 ```
 
-Ответ: `{ "message": "Подписка оформлена", "subscribed": true }`. Неизвестный ключ → `404`.
+Response: `{ "message": "Подписка оформлена", "subscribed": true }`. Unknown key → `404`.
 
 `GET /api/subscriptions`:
 
@@ -319,16 +321,16 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" https://host/api/subscriptions/
 
 ---
 
-## Feed — персональная лента 🔒
+## Feed — personal feed 🔒
 
 ```http
 GET /api/feed?types[]=article&difficulties[]=hard&min_rating=25&sort=new&per_page=20&global=1
 ```
 
-- По умолчанию показывает опубликованное из **хабов и авторов**, на которые есть подписки;
-- query-параметры перекрывают сохранённые `feed_settings`;
-- `global=1` — игнорировать подписки (вся лента);
-- сохранение настроек по умолчанию: `PUT /api/profile` с полем `feed_settings` (см. ниже).
+- By default shows published posts **from hubs and authors you subscribe to**;
+- query parameters override stored `feed_settings`;
+- `global=1` — ignore subscriptions (the entire feed);
+- to persist default settings use `PUT /api/profile` with the `feed_settings` field (see below).
 
 ## Profile 🔒
 
@@ -339,8 +341,8 @@ PUT /api/profile
 ```json
 {
   "name": "Иван Тестов",
-  "about": "Backend-разработчик",
-  "location": "Тбилиси, Грузия",
+  "about": "Backend developer",
+  "location": "Tbilisi, Georgia",
   "avatar": "https://example.com/a.png",
   "feed_settings": {
     "types": ["article"],
@@ -355,27 +357,27 @@ PUT /api/profile
 ## Users
 
 ```http
-GET /api/users                          # авторы по рейтингу
-GET /api/users/{login}                  # профиль: about, karma, badges, компания, счётчики
-GET /api/users/{login}/publications     # его опубликованные статьи (?type=&sort=)
-GET /api/users/{login}/comments         # его комментарии
-GET /api/users/{login}/followers        # кто на него подписан
-GET /api/users/{login}/following        # на кого он подписан (пользователи)
+GET /api/users                          # authors sorted by rating
+GET /api/users/{login}                  # profile: about, karma, badges, company, counters
+GET /api/users/{login}/publications     # their published posts (?type=&sort=)
+GET /api/users/{login}/comments         # their comments
+GET /api/users/{login}/followers        # who follows them
+GET /api/users/{login}/following        # who they follow (users)
 ```
 
 ## Hubs
 
 ```http
-GET /api/hubs                           # все хабы по рейтингу
-GET /api/hubs/{alias}                   # карточка хаба
-GET /api/hubs/{alias}/publications      # лента хаба (?type=&difficulty=&label=&min_rating=&sort=)
+GET /api/hubs                           # all hubs by rating
+GET /api/hubs/{alias}                   # hub card
+GET /api/hubs/{alias}/publications      # hub feed (?type=&difficulty=&label=&min_rating=&sort=)
 ```
 
 ## Companies
 
 ```http
-GET /api/companies                      # блоги компаний по рейтингу
-GET /api/companies/{slug}               # карточка: описание, отрасли, представитель, счётчики
-GET /api/companies/{slug}/publications  # корпоративные публикации
-GET /api/companies/{slug}/employees     # сотрудники
+GET /api/companies                      # corporate blogs by rating
+GET /api/companies/{slug}               # card: description, industries, representative, counters
+GET /api/companies/{slug}/publications  # corporate publications
+GET /api/companies/{slug}/employees     # employees
 ```

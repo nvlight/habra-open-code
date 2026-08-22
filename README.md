@@ -1,81 +1,81 @@
 # Habra API
 
-Backend-клон основных сущностей [habr.com](https://habr.com) — статей, хабов, компаний и соцактивности — в виде JSON API на **Laravel 13**.
+A backend-only JSON API clone of the core [habr.com](https://habr.com) entities — publications, hubs, companies, and social activity — built with **Laravel 13**.
 
-## Документация
+## Documentation
 
-| Документ | Содержимое |
+| Document | Contents |
 |---|---|
-| [`docs/domain.md`](docs/domain.md) | Доменная модель: сущности, ER-диаграмма, enum'ы, бизнес-правила |
-| [`docs/api.md`](docs/api.md) | Полный справочник всех эндпоинтов с примерами |
+| [`docs/domain.md`](docs/domain.md) | Domain model: entities, ER diagram, enums, business rules |
+| [`docs/api.md`](docs/api.md) | Full reference for every endpoint with examples |
 
-## Стек
+## Stack
 
 - PHP 8.3+, Laravel 13.17
-- PostgreSQL (dev — через Sail; prod — v16)
-- Laravel Sanctum — Bearer-токены для API
-- Pest 5 — тесты; Larastan 3 (level 5) — статанализ; Pint — стиль кода
+- PostgreSQL (dev via Sail; prod v16)
+- Laravel Sanctum — Bearer tokens for the API
+- Pest 5 — tests; Larastan 3 (level 5) — static analysis; Pint — code style
 
-## Сущности
+## Entities
 
-`User` · `Company` · `Industry` · `Hub` · `Publication` (статья/пост/новость) · `Tag` · `Comment` (дерево) · `Vote` (morph: публикации/комментарии/карма) · `Bookmark` · `Subscription` (morph: пользователи/хабы/компании) · `Badge`
+`User` · `Company` · `Industry` · `Hub` · `Publication` (article/post/news in one table) · `Tag` · `Comment` (nested tree) · `Vote` (morph: publications/comments/karma) · `Bookmark` · `Subscription` (morph: users/hubs/companies) · `Badge`
 
-Подробно о связях и правилах голосования — [docs/domain.md](docs/domain.md).
+Relations and voting rules are described in [docs/domain.md](docs/domain.md).
 
-## Быстрый старт
+## Quick Start
 
-Требуется Docker (Laravel Sail).
+Requires Docker (Laravel Sail).
 
 ```bash
-composer install                 # зависимости + vendor/bin/sail
-sail up -d                       # контейнеры (app, pgsql, redis…)
-sail artisan key:generate        # ключ приложения (если ещё нет)
+composer install                 # dependencies + vendor/bin/sail
+sail up -d                       # containers (app, pgsql, redis…)
+sail artisan key:generate        # app key (if not set yet)
 sail artisan migrate:fresh --seed
 ```
 
-API доступен на `http://localhost/api`. Проверка:
+The API is served at `http://localhost/api`. Smoke check:
 
 ```bash
 curl http://localhost/api/publications?per_page=2
 ```
 
-Демо-аккаунт администратора после сидинга:
+Demo admin account after seeding:
 
 ```
 login:  admin
 email:  admin@habr.test
-пароль: password
+password: password
 ```
 
-Все сидовые пользователи используют пароль `password`.
+All seeded users share the password `password`.
 
-## Команды
+## Commands
 
 ```bash
-sail artisan migrate:fresh --seed   # пересоздать БД с демо-данными
-sail bin pest                       # тесты (49 feature-тестов)
-sail bin pint --dirty               # стиль кода
-sail bin phpstan analyse            # статанализ (level 5)
+sail artisan migrate:fresh --seed   # rebuild DB with demo data
+sail bin pest                       # tests (49 feature tests)
+sail bin pint --dirty               # code style
+sail bin phpstan analyse            # static analysis (level 5)
 
-composer dev                        # локальный сервер без Docker
+composer dev                        # local server without Docker
 ```
 
-## Структура ключевых каталогов
+## Key Directory Structure
 
 ```
 app/
 ├── Enums/          # PublicationType/Status, Difficulty, Label, VoteSubject…
 ├── Http/
-│   ├── Controllers/Api/   # 11 контроллеров (Auth, Publication, Vote, Feed…)
-│   ├── Requests/          # валидация (StorePublicationRequest…)
-│   ├── Resources/         # API-ресурсы (PublicationResource…)
-│   └── Policies/          # права автора на публикацию/комментарий
-├── Models/         # 11 моделей
+│   ├── Controllers/Api/   # 11 controllers (Auth, Publication, Vote, Feed…)
+│   ├── Requests/          # validation (StorePublicationRequest…)
+│   ├── Resources/         # API resources (PublicationResource…)
+│   └── Policies/          # author permissions on publication/comment
+├── Models/         # 11 models
 └── Services/       # VoteService, PublicationQueryService
-routes/api.php      # 38 эндпоинтов
+routes/api.php      # 38 endpoints
 database/
-├── factories/      # фабрики всех моделей (+states: published, sandbox…)
-├── migrations/     # схема PostgreSQL
-└── seeders/        # демо-данные: хабы, компании, статьи, комментарии, голоса
-tests/Feature/      # Pest-тесты по группам эндпоинтов
+├── factories/      # factories for all models (+states: published, sandbox…)
+├── migrations/     # PostgreSQL schema
+└── seeders/        # demo data: hubs, companies, posts, comments, votes
+tests/Feature/      # Pest tests grouped by endpoint family
 ```

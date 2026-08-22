@@ -1,24 +1,24 @@
-# Доменная модель
+# Domain Model
 
-Клон сущностей [habr.com](https://habr.com) в виде backend API на Laravel 13.
+A backend clone of the core [habr.com](https://habr.com) entities — publications, hubs, companies, and social activity — as a Laravel 13 JSON API.
 
-## Обзор сущностей
+## Entities Overview
 
-| Сущность | Таблица | Назначение |
+| Entity | Table | Purpose |
 |---|---|---|
-| **User** | `users` | Автор. Логин (уникальный, идентификатор вместо email в URL), имя, «о себе», аватар, карма, рейтинг, локация, место работы, кто пригласил |
-| **Company** | `companies` | Корпоративный блог. Slug, описание, рейтинг, подписчики, сайт, численность, дата основания |
-| **Industry** | `industries` | Отрасль деятельности компании («Домены и хостинг», «Финтех»…) |
-| **Hub** | `hubs` | Тематический хаб. Alias (уникальный), название, описание, рейтинг, счётчик подписчиков |
-| **Publication** | `publications` | Единая сущность для статьи/поста/новости (`type`). Статус (`draft/sandbox/published`), сложность, метка, перевод, кэш-счётчики |
-| **Tag** | `tags` | Свободные теги публикации. Создаются на лету через `firstOrCreate` по имени |
-| **Comment** | `comments` | Комментарий к публикации. Дерево через `parent_id` (self-reference) |
-| **Vote** | `votes` | Голос ±1 за публикацию, комментарий или карму пользователя (**morph** `voteable`) |
-| **Bookmark** | `bookmarks` | Закладка пользователя на публикацию |
-| **Subscription** | `subscriptions` | Подписка на пользователя, хаб или компанию (**morph** `subscribable`) |
-| **Badge** | `badges` | Значок достижения («Легенда», «Старожил»…). Выдаётся через pivot `badge_user` |
+| **User** | `users` | Author. Unique login (used instead of email in URLs), name, bio, avatar, karma, rating, location, employer, inviter |
+| **Company** | `companies` | Corporate blog. Slug, description, rating, subscribers, website, headcount, founding date |
+| **Industry** | `industries` | Company industry ("Domains & Hosting", "Fintech"…) |
+| **Hub** | `hubs` | Thematic hub. Unique alias, name, description, rating, subscriber counter |
+| **Publication** | `publications` | Single entity for article/post/news (`type`). Status (`draft/sandbox/published`), difficulty, label, translation flags, cached counters |
+| **Tag** | `tags` | Free-form publication tags. Created on the fly via `firstOrCreate` by name |
+| **Comment** | `comments` | Publication comment. A tree via `parent_id` (self-reference) |
+| **Vote** | `votes` | ±1 vote on a publication, a comment, or a user's karma (**morph** `voteable`) |
+| **Bookmark** | `bookmarks` | User's saved publication |
+| **Subscription** | `subscriptions` | Follow of a user, hub, or company (**morph** `subscribable`) |
+| **Badge** | `badges` | Achievement badge ("Legend", "Veteran"...). Granted through the `badge_user` pivot |
 
-## ER-диаграмма
+## ER Diagram
 
 ```mermaid
 erDiagram
@@ -55,74 +55,74 @@ erDiagram
     }
 ```
 
-### Полиморфные связи (morph)
+### Polymorphic Relations (morph)
 
 - **`votes.voteable`** → `Publication` / `Comment` / `User`.
-  Голосование за публикацию и комментарий пересчитывает их рейтинг; голос за пользователя меняет его **карму**.
+  Voting on publications and comments recalculates their rating; voting on a user changes their **karma**.
 - **`subscriptions.subscribable`** → `User` / `Hub` / `Company`.
-  Для Hub и Company ведётся денормализованный `subscribers_count`; у User число подписчиков считается запросом.
+  Hubs and Companies maintain a denormalized `subscribers_count`; a user's follower count is computed by query.
 
-Уникальность: один пользователь — один голос на объект; одна подписка/закладка на объект.
+Uniqueness: one vote per user per target; one subscription/bookmark per object.
 
-## Enum'ы
+## Enums
 
-Все перечисления живут в `app/Enums/` и кастятся в моделях:
+All enumerations live in `app/Enums/` and are cast in models:
 
-| Enum | Значения | Русские лейблы |
+| Enum | Values | Russian labels (as shown in the Habr UI) |
 |---|---|---|
 | `PublicationType` | `article`, `post`, `news` | Статья, Пост, Новость |
 | `PublicationStatus` | `draft`, `sandbox`, `published` | — |
 | `Difficulty` | `easy`, `medium`, `hard` | Простой, Средний, Сложный |
 | `PublicationLabel` | `tutorial`, `case`, `analytics`, `opinion`, `review`, `digest`, `retrospective`, `roadmap` | Туториал, Кейс, Аналитика, Мнение, Обзор, Дайджест, Ретроспектива, Роадмэп |
-| `VoteSubject` | `publications`, `comments`, `users` | — (маршрутизация голосов) |
+| `VoteSubject` | `publications`, `comments`, `users` | — (vote routing) |
 | `SubscribableType` | `user`, `hub`, `company` | — |
 
-## Бизнес-правила
+## Business Rules
 
-### Жизненный цикл публикации
+### Publication Lifecycle
 
 ```
 POST /api/publications
-   │  status=draft (по умолчанию) или status=sandbox
+   │  status=draft (default) or status=sandbox
    ▼
 ┌───────┐   POST /api/publications/{id}/publish   ┌───────────┐
-│ draft │ ───────────────────────────────────────►│ published │──► виден во всех лентах
+│ draft │ ───────────────────────────────────────►│ published │──► visible everywhere
 └───────┘                                         └───────────┘
     ▲
-    │ status=sandbox при создании
+    │ status=sandbox on creation
 ┌─────────┐
-│ sandbox │  публично доступен через GET /api/publications?status=sandbox
+│ sandbox │  publicly listed via GET /api/publications?status=sandbox
 └─────────┘
 ```
 
-- **draft** — виден только автору (остальным `404`);
-- **sandbox** — аналог «Песочницы» Хабра: публичен в отдельном списке, не попадает в общую ленту;
-- **published** — публикуется с `published_at = now()`; повторный вызов `publish` дату не сбрасывает;
-- редактировать/удалять может только автор (`PublicationPolicy`); `type` после создания не меняется.
+- **draft** — only the author can see it (everyone else gets `404`);
+- **sandbox** — Habr's "Sandbox": publicly listed separately, excluded from the main feed;
+- **published** — goes live with `published_at = now()`; calling `publish` again never resets the date;
+- only the author may edit/delete (`PublicationPolicy`); `type` is immutable after creation.
 
-### Голосование
+### Voting
 
-Эндпоинты: `POST .../vote` для публикаций и комментариев, `POST /api/users/{id}/karma`. Тело: `{"value": 1}` или `{"value": -1}`.
+Endpoints: `POST .../vote` for publications and comments, `POST /api/users/{id}/karma`. Body: `{"value": 1}` or `{"value": -1}`.
 
-Поведение при повторном запросе того же пользователя (`VoteService`):
+Behavior when the same user votes again (`VoteService`):
 
-| Ситуация | Действие | Изменение рейтинга цели |
+| Situation | Action | Target's rating change |
 |---|---|---|
-| Голоса нет | создаётся | `±value` |
-| Тот же голос | снимается | `-value` |
-| Другой голос | переключается | `±2·value` |
+| No vote yet | created | `±value` |
+| Same value | removed | `-value` |
+| Opposite value | switched | `±2·value` |
 
-- Публикация: пересчитываются `rating = votes_up − votes_down`, `votes_up`, `votes_down`;
-- Комментарий: пересчитывается `rating` (сумма значений);
-- Пользователь: `karma += delta`.
+- Publication: recalculates `rating = votes_up − votes_down`, `votes_up`, `votes_down`;
+- Comment: recalculates `rating` (sum of values);
+- User: `karma += delta`.
 
-### Кэш-счётчики
+### Denormalized Counters
 
-Рейтинги, `comments_count`, `bookmarks_count`, `subscribers_count` хранятся денормализованно в таблицах и обновляются сервисами/контроллерами при изменениях. Это позволяет сортировать ленты по рейтингу без JOIN по голосам.
+Ratings, `comments_count`, `bookmarks_count`, `subscribers_count` are stored directly on tables and updated by services/controllers when data changes. This lets feeds sort by rating without joining the votes table.
 
-### Персональная лента (`feed_settings`)
+### Personal Feed (`feed_settings`)
 
-Настройки хранятся JSON-полем у пользователя (`PUT /api/profile`):
+Per-user settings are stored in a JSON column (`PUT /api/profile`):
 
 ```json
 {
@@ -132,8 +132,8 @@ POST /api/publications
 }
 ```
 
-Приоритет: query-параметры запроса перекрывают сохранённые настройки. Если у пользователя есть подписки на хабы или авторов, лента ограничивается ими (отключается параметром `global=1`).
+Precedence: query parameters override stored settings. If the user subscribes to any hubs or authors, the feed is limited to them (disable with `global=1`).
 
-### Приглашения
+### Invites
 
-`users.invited_by` — self-referencing FK: цепочка «кто кого пригласил» (на Хабре регистрация была только по инвайтам).
+`users.invited_by` — self-referencing FK: an invite chain ("who invited whom"; registration on Habr was invite-only).
