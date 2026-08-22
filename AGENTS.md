@@ -2,108 +2,58 @@
 
 ## Project Overview
 
-This is a **Laravel 13** web application scaffold (fresh installation, no custom business logic yet).
+Backend-only JSON API clone of habr.com core entities (publications, hubs, companies, social activity) built with **Laravel 13**.
 
 ## Tech Stack
 
-- **Backend**: PHP 8.3+, Laravel 13.17
-- **Database**: PostgreSQL (dev: v18 via Sail, prod: v16), SQLite for testing
-- **Queue/Cache**: Redis (production), database driver (local dev)
-- **Auth**: Laravel Sanctum (API token + SPA stateful auth)
-- **Testing**: Pest 5
-- **Static Analysis**: Larastan 3 (level 5)
-- **Code Style**: Laravel Pint 1
+- **PHP**: 8.3+ / Laravel 13.17
+- **Database**: PostgreSQL (dev via Sail, prod v16); tests run against pgsql `testing` database with `RefreshDatabase`
+- **Auth**: Laravel Sanctum (Bearer tokens)
+- **Testing**: Pest 5 (`tests/Feature`, RefreshDatabase enabled globally in `tests/Pest.php`)
+- **Static analysis**: Larastan 3 level 5 — must stay at 0 errors
+- **Code style**: Laravel Pint
 
-## Project Structure
+## Domain Model
 
-```
-app/
-  Http/Controllers/    # Only base Controller.php (no custom controllers yet)
-  Models/              # Only User.php model
-  Providers/           # AppServiceProvider.php
-bootstrap/
-  app.php              # Middleware: guest redirect -> 401, JSON exceptions for API
-config/                # Standard Laravel config files (including sanctum.php)
-database/
-  factories/           # UserFactory.php
-  migrations/          # users, cache, jobs, personal_access_tokens
-  seeders/             # DatabaseSeeder.php
-docker/prod/
-  Dockerfile           # Multi-stage PHP 8.5-FPM Alpine build
-  nginx.conf           # API-only nginx + TLS (Let's Encrypt IP cert)
-  supervisord.conf     # FPM + queue:work + scheduler
-  php.ini              # OPcache 256MB, JIT 128MB
-routes/
-  web.php              # Single route: GET / -> empty HTML response
-  api.php              # Single route: GET /api/user (auth:sanctum)
-  console.php          # Single artisan command: inspire
-tests/
-  Pest.php             # Pest base config extending TestCase
-  Feature/
-    ExampleTest.php    # Returns a successful response (Pest syntax)
-  Unit/
-    ExampleTest.php    # Asserts that true is true (Pest syntax)
-.dockerignore          # Excludes vendor, .git, .env.*, etc.
-.env.production        # Production env template (Redis for session/cache/queue)
-docker-compose.prod.yml # nginx, app, postgres, redis, certbot
-phpstan.neon.dist      # Larastan level 5, analyzes app/ directory
-```
+11 models (`app/Models/`): `User`, `Company`, `Industry`, `Hub`, `Publication` (single table for article/post/news), `Tag`, `Comment` (nested via `parent_id`), `Vote` (morph `voteable`: Publication|Comment|User-karma), `Bookmark`, `Subscription` (morph `subscribable`: User|Hub|Company), `Badge`.
 
-## Running the Project
+Enums live in `app/Enums/` and are cast in models: `PublicationType`, `PublicationStatus` (draft/sandbox/published), `Difficulty`, `PublicationLabel`, `VoteSubject`, `SubscribableType`.
+
+Full docs: `docs/domain.md` (ER diagram, business rules), `docs/api.md` (all endpoints).
+
+## Running
+
+All artisan/vendor commands go through **Sail** (no host PHP):
 
 ```bash
-# First-time setup (installs deps, copies .env, generates key, runs migrations)
-composer setup
-
-# Start development server
-composer dev
-# OR
-php artisan dev
-
-# Run tests (Pest)
-composer test
-# OR
-php artisan test
-
-# Code style (Laravel Pint)
-composer pint
-
-# Static analysis (Larastan)
-composer phpstan
-
-# Production (Docker)
-docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml build app
+sail artisan migrate:fresh --seed   # rebuild DB with demo data
+sail bin pest                       # tests
+sail bin pint --dirty               # style fix
+sail bin phpstan analyse            # static analysis
 ```
 
 ## Development Conventions
 
-- **PHP version**: 8.3+ (use attributes like `#[Fillable]`, `#[Hidden]` on models)
-- **Indentation**: 4 spaces (PHP), 2 spaces (YAML), 4 spaces (Docker Compose)
-- **Line endings**: LF
-- **Final newline**: yes
-- **Trailing whitespace**: trimmed (except .md files)
+- PHP 8.3; 4-space indent, LF, final newline
+- Models use PHP 8 attributes `#[Fillable([...])]` / `#[Hidden([...])]` instead of properties
+- Every model has a `@property` docblock listing columns with proper types (enums, Carbon, bool) — required for Larastan level 5 attribute inference
+- Relations use explicit return types (`HasMany`, `BelongsTo`, `MorphMany`…)
+- Validation in FormRequests; responses through JsonResources (`app/Http/Resources/`)
+- Authorization via Policies (`PublicationPolicy`, `CommentPolicy`) + base Controller uses `AuthorizesRequests`
+- Business logic that touches counters lives in services (`app/Services/VoteService.php`, `PublicationQueryService.php`)
+- Denormalized counters (`rating`, `comments_count`, `bookmarks_count`, `subscribers_count`) are recalculated on write, never trusted from client input
 
-## Key Patterns
+## Known Pitfalls
 
-- Models use PHP 8 attributes (`#[Fillable]`, `#[Hidden]`) instead of `$fillable`/`$hidden` properties
-- Database: PostgreSQL in both dev and production; SQLite for tests
-- Sessions, cache, and queue use `redis` in production, `database` in local dev
-- Sanctum is installed for API token authentication
-- Bootstrap configures guest redirect to 401 (API-oriented) and JSON exception rendering for API routes
-- Health check endpoint: `GET /up`
-
-## Deployment
-
-- **Production VPS**: Ubuntu 24.04, Docker + Docker Compose
-- **SSL**: Let's Encrypt IP certificate (6-day validity, auto-renewed via certbot)
-- **Services**: nginx (TLS termination), app (PHP-FPM + queue worker + scheduler), PostgreSQL 16, Redis 7, certbot
-- **Environment**: `.env` mounted as read-only volume into the app container
-- **CI/CD**: GitHub Actions — `ci.yml` (Pint + PHPStan + Pest), `deploy.yml` (SSH deploy on merge to main)
+- **Pivot naming**: BelongsToMany without an explicit table infers alphabetically sorted names — `hub_publication`, not `publication_hub`. Keep migrations consistent.
+- **Ordering**: `scopePublished()` already adds `orderByDesc(published_at)`. To re-sort by rating use `$query->reorder()->orderByDesc('rating')` — chained `orderBy` alone becomes secondary sort.
+- **Stringable comparisons**: `$request->string('sort') === 'best'` is always false (object vs string). Cast first: `(string) $request->string('sort', 'new')`.
+- **Tests & auth**: within one test method Sanctum's `RequestGuard` memoizes the user across requests. After revoking a token call `$this->app->make('auth')->forgetGuards()` before asserting 401.
+- **Mass assignment**: counter columns are not fillable; use `forceFill()` when setting them in tests/seeds.
+- Faker `unique()->word()` overflows fast in seeders — dedupe tags via `firstOrCreate(['name' => fake()->word()])`.
 
 ## Testing
 
-- Pest 5 with `tests/Unit/` and `tests/Feature/` directories
-- Base config in `tests/Pest.php` extends TestCase for Feature tests
-- Run: `composer test` or `php artisan test`
-- Static analysis: `composer phpstan` (Larastan level 5)
+- Feature tests per endpoint group in `tests/Feature/` (Auth, Publication, Comment, Vote, Bookmark, Subscription, Feed)
+- Factories have states: `published()`, `sandbox()`, `draft()`, `news()`, `post()`, `translation()`, `corporate()`
+- Run before committing: `sail bin pest && sail bin pint --dirty && sail bin phpstan analyse`
