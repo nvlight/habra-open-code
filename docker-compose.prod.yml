@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: docker/prod/Dockerfile
+    extra_hosts:
+      - "api.telegram.org:149.154.167.220"
     volumes:
       - ./.env:/var/www/html/.env:ro
       - app_storage:/var/www/html/storage

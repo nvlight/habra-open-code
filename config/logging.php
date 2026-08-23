@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\TelegramLoggerFactory;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -124,6 +125,14 @@ return [
             'driver' => 'errorlog',
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+        ],
+
+        'telegram' => [
+            'driver' => 'custom',
+            'via' => TelegramLoggerFactory::class,
+            'level' => env('LOG_TELEGRAM_LEVEL', 'error'),
+            'token' => env('TELEGRAM_BOT_TOKEN', ''),
+            'chat_id' => env('TELEGRAM_CHAT_ID', ''),
         ],
 
         'null' => [
