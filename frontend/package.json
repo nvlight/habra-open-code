@@ -9,6 +9,7 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
     "postinstall": "quasar prepare --silent"
   },
   "dependencies": {
@@ -20,11 +21,15 @@
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@quasar/app-vite": "^3.8.0",
     "@types/node": "^22.19.11",
+    "@vue/test-utils": "^2.4.11",
     "autoprefixer": "^10.4.27",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.8",
     "typescript": "^6.0.0",
+    "vitest": "^4.1.11",
     "vue-tsc": "^3.3.3"
   },
   "keywords": [

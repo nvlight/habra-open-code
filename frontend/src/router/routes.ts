@@ -7,7 +7,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', component: () => import('@/pages/FeedPage.vue') },
       {
-        path: 'publications/:id(\\d+)',
+        path: 'publications/:id',
         component: () => import('@/pages/PublicationPage.vue'),
         props: true
       },

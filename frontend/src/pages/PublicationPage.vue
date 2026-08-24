@@ -166,11 +166,11 @@ async function load(): Promise<void> {
 
   try {
     const [pubResponse, commentsResponse] = await Promise.all([
-      api.get<Publication>(`/publications/${props.id}`),
-      api.get<Comment[]>(`/publications/${props.id}/comments`)
+      api.get<{ data: Publication }>(`/publications/${props.id}`),
+      api.get<{ data: Comment[] }>(`/publications/${props.id}/comments`)
     ]);
-    publication.value = pubResponse.data;
-    comments.value = commentsResponse.data;
+    publication.value = pubResponse.data.data;
+    comments.value = Array.isArray(commentsResponse.data.data) ? commentsResponse.data.data : [];
   } catch (error) {
     const status = (error as { response?: { status?: number } }).response?.status;
     if (status === 404) {
@@ -242,12 +242,13 @@ async function submitComment(parent: Comment | null): Promise<void> {
   postingComment.value = true;
 
   try {
-    const { data } = await api.post<Comment>(`/publications/${props.id}/comments`, { body });
+    const { data } = await api.post<{ data: Comment }>(`/publications/${props.id}/comments`, { body });
+    const created = data.data;
 
-    if (data.replies === undefined) {
-      data.replies = [];
+    if (created.replies === undefined) {
+      created.replies = [];
     }
-    comments.value.unshift(data);
+    comments.value.unshift(created);
 
     newCommentBody.value = '';
     if (publication.value !== null) {
@@ -259,15 +260,16 @@ async function submitComment(parent: Comment | null): Promise<void> {
 }
 
 async function addReply(parent: Comment, body: string): Promise<void> {
-  const { data } = await api.post<Comment>(`/publications/${props.id}/comments`, {
+  const { data } = await api.post<{ data: Comment }>(`/publications/${props.id}/comments`, {
     body,
     parent_id: parent.id
   });
+  const created = data.data;
 
-  if (data.replies === undefined) {
-    data.replies = [];
+  if (created.replies === undefined) {
+    created.replies = [];
   }
-  parent.replies.push(data);
+  parent.replies.push(created);
 
   if (publication.value !== null) {
     publication.value.comments_count += 1;

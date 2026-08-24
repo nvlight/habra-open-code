@@ -75,6 +75,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
+import { Notify } from 'quasar';
 import { api } from '@/boot/axios';
 import type { HubRef, Paginated, Publication } from '@/types/api';
 import PublicationCard from '@/components/PublicationCard.vue';
@@ -120,8 +121,8 @@ async function load(): Promise<void> {
     }
 
     const { data } = await api.get<Paginated<Publication>>('/publications', { params });
-    publications.value = data.data;
-    meta.value = data.meta;
+    publications.value = Array.isArray(data.data) ? data.data : [];
+    meta.value = data.meta ?? null;
   } finally {
     loading.value = false;
   }
@@ -148,7 +149,11 @@ function filterHubs(input: string, update: (callback: () => void) => void): void
 onMounted(async () => {
   void load();
 
-  const { data } = await api.get<HubRef[]>('/hubs');
-  hubsAll.value = [...data].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  try {
+    const { data } = await api.get<Paginated<HubRef>>('/hubs');
+    hubsAll.value = [...data.data].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  } catch {
+    Notify.create({ type: 'negative', message: 'Не удалось загрузить список хабов' });
+  }
 });
 </script>
