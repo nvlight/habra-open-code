@@ -12,6 +12,7 @@ services:
       - app_storage:/var/www/html/storage:ro
       - app_bootstrap:/var/www/html/bootstrap/cache:ro
     depends_on:
+      - frontend
       - app
     restart: unless-stopped
 
@@ -28,18 +29,18 @@ services:
     environment:
       - VPS_IP=${VPS_IP}
     depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     depends_on:
       - app
-    restart: unless-stopped
-
-  postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: unless-stopped
 
   postgres:
