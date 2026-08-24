@@ -16,6 +16,20 @@ it('creates a comment on a publication', function () {
     expect($publication->refresh()->comments_count)->toBe(1);
 });
 
+it('returns hydrated db defaults for a freshly created comment', function () {
+    $user = User::factory()->create();
+    $publication = Publication::factory()->published()->create();
+
+    $response = $this->actingAs($user, 'sanctum')->postJson("/api/publications/{$publication->id}/comments", [
+        'body' => 'Новый комментарий',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.rating', 0)
+        ->assertJsonPath('data.author.login', $user->login)
+        ->assertJsonPath('data.parent_id', null);
+});
+
 it('requires authentication to comment', function () {
     $publication = Publication::factory()->published()->create();
 

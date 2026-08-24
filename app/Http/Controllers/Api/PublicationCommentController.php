@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
 use App\Models\Comment;
 use App\Models\Publication;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PublicationCommentController extends Controller
@@ -27,7 +28,7 @@ class PublicationCommentController extends Controller
         return CommentResource::collection($comments);
     }
 
-    public function store(StoreCommentRequest $request, Publication $publication): CommentResource
+    public function store(StoreCommentRequest $request, Publication $publication): JsonResponse
     {
         $data = $request->validated();
 
@@ -47,6 +48,8 @@ class PublicationCommentController extends Controller
 
         $publication->increment('comments_count');
 
-        return new CommentResource($comment->load('author'));
+        return (new CommentResource($comment->fresh('author')))
+            ->response()
+            ->setStatusCode(201);
     }
 }
