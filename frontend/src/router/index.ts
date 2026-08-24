@@ -21,12 +21,14 @@ export default defineRouter(({ store }) => {
   });
 
   Router.beforeEach((to) => {
-    if (to.meta.guestOnly === true) {
-      const auth = useAuthStore(store);
+    const auth = useAuthStore(store);
 
-      if (auth.isLoggedIn) {
-        return { path: '/' };
-      }
+    if (to.meta.requiresAuth === true && !auth.isLoggedIn) {
+      return { path: '/login' };
+    }
+
+    if (to.meta.guestOnly === true && auth.isLoggedIn) {
+      return { path: '/' };
     }
 
     return true;

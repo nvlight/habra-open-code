@@ -11,6 +11,23 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/PublicationPage.vue'),
         props: true
       },
+      { path: 'users', component: () => import('@/pages/UsersPage.vue') },
+      { path: 'users/:login', component: () => import('@/pages/UserPage.vue'), props: true },
+      { path: 'hubs', component: () => import('@/pages/HubsPage.vue') },
+      { path: 'hubs/:alias', component: () => import('@/pages/HubPage.vue'), props: true },
+      { path: 'companies', component: () => import('@/pages/CompaniesPage.vue') },
+      { path: 'companies/:slug', component: () => import('@/pages/CompanyPage.vue'), props: true },
+      {
+        path: 'editor/:id?',
+        component: () => import('@/pages/EditorPage.vue'),
+        props: true,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'bookmarks',
+        component: () => import('@/pages/BookmarksPage.vue'),
+        meta: { requiresAuth: true }
+      },
       {
         path: 'login',
         component: () => import('@/pages/LoginPage.vue'),

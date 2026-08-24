@@ -113,3 +113,64 @@ export interface ValidationErrorResponse {
   message: string;
   errors: Record<string, string[]>;
 }
+
+export interface Badge {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  awarded_at: string | null;
+}
+
+export interface UserProfile extends User {
+  badges?: Badge[];
+  company?: CompanyRef | null;
+  created_at?: string;
+}
+
+export interface Hub extends HubRef {
+  description?: string | null;
+  avatar?: string | null;
+  rating?: string;
+  subscribers_count?: number;
+}
+
+export interface IndustryRef {
+  id: number;
+  name: string;
+  slug?: string;
+}
+
+export interface Company extends CompanyRef {
+  description?: string | null;
+  avatar?: string | null;
+  website?: string | null;
+  rating?: string;
+  location?: string | null;
+  size?: string | null;
+  founded_at?: string | null;
+  representative?: Author | null;
+  industries?: IndustryRef[];
+  subscribers_count?: number;
+}
+
+export interface SubscriptionGroups {
+  users: Author[];
+  hubs: Hub[];
+  companies: Company[];
+}
+
+export interface PublicationPayload {
+  title: string;
+  lead: string | null;
+  body: string;
+  type: PublicationType;
+  status: 'draft' | 'sandbox';
+  difficulty: 'easy' | 'medium' | 'hard' | null;
+  label: string | null;
+  is_translation: boolean;
+  source_url: string | null;
+  original_author: string | null;
+  hubs: number[];
+  tags: string[];
+}

@@ -8,15 +8,24 @@
 
         <nav class="row items-center q-gutter-x-sm">
           <q-btn flat no-caps dense label="Лента" to="/" :color="$route.path === '/' ? 'primary' : 'dark'" />
-          <q-btn flat no-caps dense disable label="Хабы" class="text-grey-6" />
-          <q-btn flat no-caps dense disable label="Компании" class="text-grey-6" />
-          <q-btn flat no-caps dense disable label="Пользователи" class="text-grey-6" />
+          <q-btn flat no-caps dense label="Хабы" to="/hubs" :color="$route.path.startsWith('/hubs') ? 'primary' : 'dark'" />
+          <q-btn flat no-caps dense label="Компании" to="/companies" :color="$route.path.startsWith('/companies') ? 'primary' : 'dark'" />
+          <q-btn flat no-caps dense label="Авторы" to="/users" :color="$route.path.startsWith('/users') ? 'primary' : 'dark'" />
+          <q-btn flat no-caps dense label="Закладки" to="/bookmarks" icon="bookmark_border"
+            :color="$route.path === '/bookmarks' ? 'primary' : 'dark'" />
         </nav>
 
         <q-space />
 
         <template v-if="auth.isLoggedIn">
-          <span class="text-caption q-mr-md">{{ auth.user?.name }}</span>
+          <q-btn
+            unelevated no-caps dense color="primary"
+            label="Написать" to="/editor" icon="edit"
+            class="q-mr-md" data-testid="write-button"
+          />
+          <span class="text-caption q-mr-md cursor-pointer" @click="router.push(`/users/${auth.user?.login}`)">
+            {{ auth.user?.name }}
+          </span>
           <q-avatar size="32px" color="primary" text-color="white" class="cursor-pointer">
             {{ initial }}
             <q-menu>

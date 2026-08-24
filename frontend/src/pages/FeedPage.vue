@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-tabs
-      v-model="sort"
+      v-model="mode"
       no-caps
       dense
       align="left"
@@ -12,9 +12,10 @@
     >
       <q-tab name="new" label="Новые" />
       <q-tab name="best" label="Лучшие" />
+      <q-tab name="my" label="Моя" data-testid="my-feed-tab" />
     </q-tabs>
 
-    <div class="row q-col-gutter-sm q-mb-md">
+    <div v-if="mode !== 'my'" class="row q-col-gutter-sm q-mb-md">
       <div class="col-auto" style="min-width: 180px">
         <q-select
           v-model="type"
@@ -79,8 +80,11 @@ import { Notify } from 'quasar';
 import { api } from '@/boot/axios';
 import type { HubRef, Paginated, Publication } from '@/types/api';
 import PublicationCard from '@/components/PublicationCard.vue';
+import { useAuthStore } from '@/stores/auth';
 
-const sort = ref<'new' | 'best'>('new');
+const auth = useAuthStore();
+
+const mode = ref<'new' | 'best' | 'my'>('new');
 const type = ref<string | null>(null);
 const hub = ref<string | null>(null);
 const page = ref(1);
@@ -104,23 +108,33 @@ const hubOptions = ref(
 );
 
 async function load(): Promise<void> {
+  if (mode.value === 'my' && !auth.isLoggedIn) {
+    Notify.create({ type: 'warning', message: 'Войдите, чтобы видеть личную ленту' });
+    mode.value = 'new';
+    return;
+  }
+
   loading.value = true;
 
   try {
     const params: Record<string, string | number> = {
       page: page.value,
       per_page: 20,
-      sort: sort.value
+      sort: mode.value === 'best' ? 'best' : 'new'
     };
 
-    if (type.value !== null) {
-      params.type = type.value;
-    }
-    if (hub.value !== null) {
-      params.hub = hub.value;
+    const endpoint = mode.value === 'my' ? '/feed' : '/publications';
+
+    if (mode.value !== 'my') {
+      if (type.value !== null) {
+        params.type = type.value;
+      }
+      if (hub.value !== null) {
+        params.hub = hub.value;
+      }
     }
 
-    const { data } = await api.get<Paginated<Publication>>('/publications', { params });
+    const { data } = await api.get<Paginated<Publication>>(endpoint, { params });
     publications.value = Array.isArray(data.data) ? data.data : [];
     meta.value = data.meta ?? null;
   } finally {
@@ -128,7 +142,7 @@ async function load(): Promise<void> {
   }
 }
 
-watch([sort, type, hub], () => {
+watch([mode, type, hub], () => {
   page.value = 1;
   void load();
 });

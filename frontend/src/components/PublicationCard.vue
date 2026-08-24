@@ -21,12 +21,15 @@
         <p class="pub-lead q-my-sm">{{ publication.lead }}</p>
 
         <div class="pub-meta">
-          <span>{{ publication.author.name }}</span>
-          <span
-            v-for="hub in publication.hubs"
-            :key="hub.id"
-          >· {{ hub.name }}</span>
-          <span v-if="publication.company">· {{ publication.company.name }}</span>
+          <router-link :to="`/users/${publication.author.login}`" style="color: #159be0">
+            {{ publication.author.name }}
+          </router-link>
+          <router-link
+            v-for="item in publication.hubs"
+            :key="item.id"
+            :to="`/hubs/${item.alias}`"
+            style="color: #72757d"
+          >· {{ item.name }}</router-link>
           <span>· {{ publication.reading_time }} мин</span>
           <span>· {{ formatCount(publication.views_count) }} просмотров</span>
           <span>· {{ formatDate(publication.published_at) }}</span>
