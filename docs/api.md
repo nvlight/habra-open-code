@@ -222,7 +222,7 @@ Comment tree: `parent_id` references a comment of the same publication.
 GET /api/publications/{publication}/comments
 ```
 
-Returns only top-level comments with nested `replies` (3 levels deep):
+Returns only top-level comments with nested `replies` (3 levels deep). Authors are present at every nesting level:
 
 ```json
 [
@@ -237,8 +237,12 @@ Returns only top-level comments with nested `replies` (3 levels deep):
       {
         "id": 102,
         "body": "Согласен",
+        "rating": 1,
         "parent_id": 101,
-        "replies": []
+        "publication_id": 61,
+        "author": { "id": 8, "login": "vasya", "name": "…" },
+        "replies": [],
+        "created_at": "2026-08-21T12:05:00+00:00"
       }
     ],
     "created_at": "2026-08-21T12:00:00+00:00"
@@ -253,7 +257,7 @@ POST /api/publications/{publication}/comments
 { "body": "Мой комментарий", "parent_id": null }
 ```
 
-`201` → created comment; increments the publication's `comments_count`. Replying to a comment that belongs to another publication → `404`.
+`201` → created comment with hydrated defaults (`rating` is always `0`, never `null`); increments the publication's `comments_count`. Replying to a comment that belongs to another publication → `404`.
 
 ### Delete 🔒 (author only)
 
