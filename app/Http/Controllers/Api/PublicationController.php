@@ -87,7 +87,7 @@ class PublicationController extends Controller
 
     public function show(Request $request, Publication $publication): PublicationResource
     {
-        if ($publication->status === PublicationStatus::Draft && $publication->user_id !== $request->user()?->id) {
+        if ($publication->status === PublicationStatus::Draft && $publication->user_id !== $request->user('sanctum')?->id) {
             abort(404);
         }
 
