@@ -1,0 +1,23 @@
+services:
+  frontend-dev:
+    image: node:22.22-alpine
+    working_dir: /app
+    volumes:
+      - ../../frontend:/app
+    ports:
+      - "9000:9000"
+    networks:
+      - sail
+      - default
+    environment:
+      API_PROXY_TARGET: http://laravel.test
+      CI: "1"
+    command: sh -c "npm install --no-audit --no-fund && npm install axios --no-audit --no-fund && npm run dev"
+    stdin_open: true
+    tty: true
+
+networks:
+  default:
+  sail:
+    external: true
+    name: habra-open-code_sail
