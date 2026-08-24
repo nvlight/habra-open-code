@@ -28,7 +28,15 @@ services:
     environment:
       - VPS_IP=${VPS_IP}
     depends_on:
-      postgres:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  postgres:
         condition: service_healthy
       redis:
         condition: service_healthy

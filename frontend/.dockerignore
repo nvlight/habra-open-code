@@ -1,0 +1,8 @@
+node_modules
+dist
+.quasar
+test-results
+playwright-report
+coverage
+e2e
+.git
