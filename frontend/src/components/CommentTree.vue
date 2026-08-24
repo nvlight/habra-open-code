@@ -12,7 +12,7 @@
 
       <div class="col">
         <div class="pub-meta">
-          <span class="text-weight-medium text-dark">{{ comment.author.name }}</span>
+          <span class="text-weight-medium text-dark">{{ comment.author?.name ?? 'Гость' }}</span>
           <span>· {{ formatDate(comment.created_at) }}</span>
           <template v-if="isMine">
             <q-btn flat dense size="11px" color="negative" label="Удалить" @click="emit('delete', comment)" />
@@ -90,7 +90,7 @@ const replying = ref(false);
 const replyBody = ref('');
 const sending = ref(false);
 
-const isMine = auth.user !== null && auth.user.id === props.comment.author.id;
+const isMine = auth.user !== null && props.comment.author !== undefined && auth.user.id === props.comment.author.id;
 
 async function submitReply(): Promise<void> {
   const body = replyBody.value.trim();

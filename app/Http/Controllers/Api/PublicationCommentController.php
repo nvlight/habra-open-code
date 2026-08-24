@@ -14,7 +14,12 @@ class PublicationCommentController extends Controller
     public function index(Publication $publication): AnonymousResourceCollection
     {
         $comments = $publication->comments()
-            ->with(['author', 'replies.replies.replies'])
+            ->with([
+                'author',
+                'replies.author',
+                'replies.replies.author',
+                'replies.replies.replies.author',
+            ])
             ->whereNull('parent_id')
             ->latest()
             ->get();
