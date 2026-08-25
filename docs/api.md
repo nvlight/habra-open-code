@@ -43,6 +43,8 @@ All lists use Laravel pagination (`?page=2&per_page=20`, `per_page` ≤ 100):
 POST /api/auth/register
 ```
 
+> Registration can be disabled at the application level (`php artisan registration:disable` / `registration:enable`). While disabled, this endpoint responds `403` with `{ "message": "Регистрация временно приостановлена" }`.
+
 ```json
 {
   "name": "Ivan Testov",

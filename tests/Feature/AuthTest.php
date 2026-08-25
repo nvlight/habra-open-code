@@ -30,6 +30,35 @@ it('rejects duplicate login on registration', function () {
     ])->assertUnprocessable()->assertJsonValidationErrors('login');
 });
 
+it('blocks registration when disabled via command', function () {
+    $this->artisan('registration:disable');
+
+    $this->postJson('/api/auth/register', [
+        'name' => 'Заблокированный',
+        'login' => 'blocked_user',
+        'email' => 'blocked@test.dev',
+        'password' => 'secret1234',
+        'password_confirmation' => 'secret1234',
+    ])->assertForbidden()
+        ->assertJsonPath('message', 'Регистрация временно приостановлена');
+
+    expect(User::query()->where('login', 'blocked_user')->exists())->toBeFalse();
+});
+
+it('re-enables registration via command', function () {
+    $this->artisan('registration:disable');
+    $this->artisan('registration:enable');
+
+    $this->postJson('/api/auth/register', [
+        'name' => 'Возвращённый',
+        'login' => 're_enabled_user',
+        'email' => 'reenabled@test.dev',
+        'password' => 'secret1234',
+        'password_confirmation' => 'secret1234',
+    ])->assertCreated()
+        ->assertJsonPath('user.login', 're_enabled_user');
+});
+
 it('logs in with email or login', function () {
     $user = User::factory()->create(['password' => 'secret1234']);
 

@@ -83,6 +83,7 @@ The dev container joins the Sail network and proxies `/api` to `http://laravel.t
 - **Stringable comparisons**: `$request->string('sort') === 'best'` is always false (object vs string). Cast first: `(string) $request->string('sort', 'new')`.
 - **Tests & auth**: within one test method Sanctum's `RequestGuard` memoizes the user across requests. After revoking a token call `$this->app->make('auth')->forgetGuards()` before asserting 401.
 - **Mass assignment**: counter columns are not fillable; use `forceFill()` when setting them in tests/seeds.
+- **Registration flag lives in cache**: `registration:disable/enable` store the flag via `Cache::forever`. Running `cache:clear` / `optimize:clear` silently re-enables registration — re-run the command after clearing the cache.
 - Faker `unique()->word()` overflows fast in seeders — dedupe tags via `firstOrCreate(['name' => fake()->word()])`.
 
 ### Frontend

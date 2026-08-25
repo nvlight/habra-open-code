@@ -9,12 +9,19 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
+        abort_if(
+            (bool) Cache::get('registration.disabled', false),
+            403,
+            'Регистрация временно приостановлена'
+        );
+
         /** @var User $user */
         $user = User::create($request->validated());
 
