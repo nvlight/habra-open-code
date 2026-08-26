@@ -46,6 +46,15 @@ server.mjs               # zero-dependency prod static server + SPA fallback
 Dockerfile               # multi-stage prod image (node build → node runtime)
 ```
 
+## Theming
+
+Design tokens are extracted from habr.com's official theme CSS (`light-v2.css` / `dark-v2.css`) and live in `src/css/quasar.variables.scss` as CSS custom properties (`--habr-*`) for both light and dark palettes.
+
+- **Auto dark mode**: on startup `src/boot/theme.ts` follows `prefers-color-scheme` and keeps listening for OS-level changes.
+- **Manual override**: the ☀/🌙/AUTO button in the header cycles `auto → light → dark`; the choice persists in localStorage (`theme` key).
+- Quasar dark mode is driven via `Dark.set()`, which toggles `body--dark` — all custom classes (`.habr-card`, `.pub-title`, `.vote-arrow`, …) read the tokens and restyle automatically.
+- Fonts: **Fira Sans** (UI) and **Inter** (article text), self-hosted via `@fontsource/*` packages — no external CDN, cyrillic subsets included.
+
 ## API envelope rule
 
 Every list endpoint returns `{ data: [...], links, meta }`; single resources are wrapped as `{ data: { … } }`. Unwrap before use and guard arrays with `Array.isArray(...)` — see `usePublicationFeed()`.

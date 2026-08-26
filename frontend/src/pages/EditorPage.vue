@@ -25,7 +25,7 @@
       />
 
       <div>
-        <div class="text-caption text-grey q-mb-xs">Текст публикации (markdown/html) *</div>
+        <div class="text-caption text-dim q-mb-xs">Текст публикации (markdown/html) *</div>
         <q-input
           v-model="form.body"
           outlined
@@ -114,7 +114,7 @@
       </div>
 
       <div v-if="!isEdit" class="row q-gutter-x-sm items-center">
-        <span class="text-caption text-grey">Статус:</span>
+        <span class="text-caption text-dim">Статус:</span>
         <q-btn-toggle
           v-model="form.status"
           :options="[
@@ -124,14 +124,13 @@
           unelevated
           no-caps
           dense
+          flat
           toggle-color="primary"
-          color="grey-3"
-          text-color="dark"
         />
       </div>
 
       <div v-if="isEdit && publication" class="row items-center q-gutter-x-sm">
-        <span class="text-caption text-grey">Статус:</span>
+        <span class="text-caption text-dim">Статус:</span>
         <q-badge :color="statusColor" :label="publication.status" />
         <q-btn
           v-if="publication.status !== 'published'"
@@ -151,8 +150,7 @@
         <router-link
           v-if="publication.status === 'published'"
           :to="`/publications/${publication.id}`"
-          style="color: #159be0"
-          class="text-caption"
+          class="text-link text-caption"
         >Открыть страницу →</router-link>
       </div>
 
@@ -198,7 +196,7 @@ const isEdit = computed(() => props.id !== undefined);
 const statusColor = computed(() => {
   if (publication.value === null) return 'grey';
   if (publication.value.status === 'published') return 'positive';
-  return publication.value.status === 'sandbox' ? 'warning' : 'grey-6';
+  return publication.value.status === 'sandbox' ? 'warning' : 'secondary';
 });
 
 const publication = ref<Publication | null>(null);

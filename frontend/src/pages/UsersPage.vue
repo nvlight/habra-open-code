@@ -18,10 +18,10 @@
           <q-avatar size="32px" color="primary" text-color="white">{{ author.name.charAt(0).toUpperCase() }}</q-avatar>
           <span>
             {{ author.name }}
-            <span class="text-grey text-caption">@{{ author.login }}</span>
+            <span class="text-dim text-caption">@{{ author.login }}</span>
           </span>
         </div>
-        <q-badge outline color="grey-7" :label="`рейтинг ${author.rating}`" />
+        <q-badge class="tag-badge" :label="`рейтинг ${author.rating}`" />
       </router-link>
       <EmptyNote v-if="authors.length === 0" text="Авторы не найдены" />
     </q-card>
@@ -32,7 +32,7 @@
         :max="meta.last_page"
         direction-links
         boundary-numbers
-        color="grey-8"
+        
         active-color="primary"
       />
     </div>

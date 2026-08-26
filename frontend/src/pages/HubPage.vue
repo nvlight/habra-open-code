@@ -4,10 +4,10 @@
       <div class="row items-center q-gutter-x-md">
         <div class="col">
           <div class="text-h5 text-weight-bold">{{ hub?.name }}</div>
-          <p v-if="hub?.description" class="text-body2 text-grey-8 q-mt-xs q-mb-none">
+          <p v-if="hub?.description" class="text-body2 text-dim q-mt-xs q-mb-none">
             {{ hub.description }}
           </p>
-          <div class="text-caption text-grey q-mt-sm">
+          <div class="text-caption text-dim q-mt-sm">
             {{ formatCount(hub?.subscribers_count ?? 0) }} подписчиков · рейтинг {{ hub?.rating }}
           </div>
         </div>
@@ -31,7 +31,7 @@
           :max="meta.last_page"
           direction-links
           boundary-numbers
-          color="grey-8"
+          
           active-color="primary"
         />
       </div>

@@ -4,11 +4,11 @@
       <div class="row items-center q-gutter-x-md">
         <div class="col">
           <div class="text-h5 text-weight-bold">{{ company?.name }}</div>
-          <p v-if="company?.description" class="text-body2 text-grey-8 q-mt-xs q-mb-none">
+          <p v-if="company?.description" class="text-body2 text-dim q-mt-xs q-mb-none">
             {{ company.description }}
           </p>
 
-          <div class="row q-gutter-x-md text-caption text-grey q-mt-sm">
+          <div class="row q-gutter-x-md text-caption text-dim q-mt-sm">
             <span v-if="company?.location"><q-icon name="place" size="13px" /> {{ company.location }}</span>
             <span v-if="company?.size"><q-icon name="groups" size="13px" /> {{ company.size }}</span>
             <span v-if="company?.founded_at">с {{ company.founded_at.slice(0, 4) }}</span>
@@ -17,17 +17,17 @@
               :href="company.website"
               target="_blank"
               rel="noopener"
-              style="color: #159be0"
+              class="text-link"
             >{{ company.website.replace(/^https?:\/\//, '') }}</a>
           </div>
 
           <div v-if="company?.industries && company.industries.length > 0" class="row q-gutter-x-xs q-mt-sm">
-            <q-badge v-for="industry in company.industries" :key="industry.id" outline color="grey-7" :label="industry.name" class="q-mx-xs" />
+            <q-badge v-for="industry in company.industries" :key="industry.id" class="tag-badge" :label="industry.name" class="q-mx-xs" />
           </div>
 
           <div v-if="company?.representative" class="text-caption q-mt-sm">
             Представитель:
-            <router-link :to="`/users/${company.representative.login}`" style="color: #159be0">
+            <router-link :to="`/users/${company.representative.login}`" class="text-link">
               {{ company.representative.name }}
             </router-link>
           </div>
@@ -35,7 +35,7 @@
 
         <div v-if="company" class="col-auto column items-end q-gutter-y-sm">
           <SubscribeButton type="company" :key-value="company.slug" />
-          <div class="text-caption text-grey">
+          <div class="text-caption text-dim">
             {{ formatCount(company.subscribers_count ?? 0) }} подписчиков · рейтинг {{ company.rating }}
           </div>
         </div>
@@ -49,7 +49,7 @@
       align="left"
       active-color="primary"
       indicator-color="primary"
-      class="bg-white habr-card q-mb-md"
+      class="habr-card panel-card q-mb-md"
       style="border-radius: 4px"
     >
       <q-tab name="publications" label="Публикации" />
@@ -74,8 +74,8 @@
           class="row items-center justify-between q-py-sm"
           style="color: inherit"
         >
-          <span>{{ employee.name }} <span class="text-grey text-caption">@{{ employee.login }}</span></span>
-          <q-badge outline color="grey-7" :label="`рейтинг ${employee.rating}`" />
+          <span>{{ employee.name }} <span class="text-dim text-caption">@{{ employee.login }}</span></span>
+          <q-badge class="tag-badge" :label="`рейтинг ${employee.rating}`" />
         </router-link>
         <EmptyNote v-if="employees.length === 0" text="Сотрудников нет" />
       </q-card>

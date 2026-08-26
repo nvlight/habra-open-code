@@ -5,7 +5,7 @@
     no-caps
     dense
     :loading="busy"
-    :color="subscribed ? 'grey-7' : 'primary'"
+    :color="subscribed ? 'secondary' : 'primary'"
     :label="buttonLabel"
     data-testid="subscribe"
     @click="onToggle"

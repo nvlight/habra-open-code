@@ -1,14 +1,54 @@
-// Quasar SCSS variables (@quasar/options > sassVariables)
-// Habr-like palette
+// Quasar SCSS variables + Habra Open Code design tokens
+// Values extracted from habr.com official theme CSS (light-v2 / dark-v2)
 
-$primary:   #e8591c;
-$secondary: #5e9e57;
-$accent:    #3d80ad;
+$primary:   hsl(200, 34%, 50%);  // accent-primary
+$secondary: hsl(76, 100%, 33%);  // accent-positive
+$accent:    hsl(30, 96%, 49%);   // label-sorbus — brand orange
 
-$dark:      #1b1f23;
-$dark-page: #121618;
+$dark:      hsl(0, 0%, 15%);
+$dark-page: hsl(0, 0%, 3%);
 
-$positive:  #4e8f52;
-$negative:  #cf4647;
-$info:      #31ccec;
-$warning:   #f2c037;
+$positive:  hsl(140, 50%, 52%);  // complexity-low
+$negative:  hsl(0, 58%, 56%);    // accent-danger
+$info:      hsl(200, 70%, 58%);  // complexity-medium
+$warning:   hsl(30, 96%, 49%);
+
+:root {
+  --habr-text-main: hsl(0, 0%, 20%);
+  --habr-text-secondary: hsl(0, 0%, 56%);
+  --habr-text-inactive: hsl(195, 3%, 45%);
+  --habr-bg-page: hsl(0, 0%, 97%);
+  --habr-bg-card: hsl(0, 0%, 100%);
+  --habr-bg-subtle: hsl(0, 0%, 94%);
+  --habr-border: rgba(0, 0, 0, 0.09);
+  --habr-link: hsl(200, 34%, 50%);
+  --habr-link-hover: hsl(200, 43%, 39%);
+  --habr-accent-orange: hsl(30, 96%, 49%);
+  --habr-vote-up-active: hsl(30, 96%, 45%);
+  --habr-vote-down-active: hsl(200, 34%, 50%);
+  --habr-header-bg: hsl(207, 17%, 23%);
+  --habr-header-bg-secondary: hsl(210, 9%, 13%);
+  --habr-header-text: hsl(0, 0%, 100%);
+  --habr-header-muted: hsl(210, 14%, 72%);
+  --habr-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.body--dark {
+  --habr-text-main: hsl(0, 0%, 87%);
+  --habr-text-secondary: hsl(0, 0%, 67%);
+  --habr-text-inactive: hsl(0, 0%, 55%);
+  --habr-bg-page: hsl(0, 0%, 15%);
+  --habr-bg-card: hsl(0, 0%, 9%);
+  --habr-bg-subtle: hsl(0, 0%, 12%);
+  --habr-border: rgba(255, 255, 255, 0.09);
+  --habr-link: hsl(200, 80%, 61%);
+  --habr-link-hover: hsl(199, 100%, 75%);
+  --habr-accent-orange: hsl(30, 100%, 63%);
+  --habr-vote-up-active: hsl(30, 100%, 63%);
+  --habr-vote-down-active: hsl(200, 80%, 61%);
+  --habr-header-bg: hsl(0, 0%, 5%);
+  --habr-header-bg-secondary: hsl(0, 0%, 3%);
+  --habr-header-text: hsl(0, 0%, 100%);
+  --habr-header-muted: hsl(0, 0%, 65%);
+  --habr-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5);
+}

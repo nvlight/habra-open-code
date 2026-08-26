@@ -39,7 +39,7 @@
 
     <q-card-section class="text-caption text-center">
       Нет аккаунта?
-      <router-link to="/register" style="color: #159be0">Зарегистрируйтесь</router-link>
+      <router-link to="/register" class="text-link">Зарегистрируйтесь</router-link>
     </q-card-section>
   </q-card>
 </template>

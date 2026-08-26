@@ -10,12 +10,12 @@
       <div v-for="hub in hubs" :key="hub.id" class="col-12 col-sm-6 col-md-4">
         <q-card flat class="habr-card full-height">
           <q-card-section>
-            <router-link :to="`/hubs/${hub.alias}`" class="text-weight-medium text-h6" style="color: #159be0">
+            <router-link :to="`/hubs/${hub.alias}`" class="text-weight-medium text-h6 text-link">
               {{ hub.name }}
             </router-link>
-            <p class="text-caption text-grey q-mt-xs">{{ hub.description }}</p>
+            <p class="text-caption text-dim q-mt-xs">{{ hub.description }}</p>
           </q-card-section>
-          <q-card-section class="q-pt-none row justify-between text-caption text-grey">
+          <q-card-section class="q-pt-none row justify-between text-caption text-dim">
             <span>{{ formatCount(hub.subscribers_count) }} подписчиков</span>
             <span>рейтинг {{ hub.rating }}</span>
           </q-card-section>

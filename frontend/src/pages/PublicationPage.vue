@@ -34,7 +34,7 @@
 
             <h1 class="text-h5 text-weight-bold q-my-sm">{{ publication.title }}</h1>
 
-            <p v-if="publication.lead" class="text-body2 text-grey-8">{{ publication.lead }}</p>
+            <p v-if="publication.lead" class="text-body2 text-dim">{{ publication.lead }}</p>
 
             <div class="pub-meta">
               <span>{{ publication.author.name }}</span>
@@ -56,20 +56,18 @@
                 flat dense no-caps size="sm"
                 :icon="bookmarked ? 'bookmark' : 'bookmark_border'"
                 :label="`В закладки · ${formatCount(publication.bookmarks_count)}`"
-                :color="bookmarked ? 'primary' : 'grey-7'"
+                :color="bookmarked ? 'accent' : undefined"
                 data-testid="bookmark"
                 @click="toggleBookmark"
               />
-              <q-icon name="chat_bubble_outline" size="16px" color="grey-7" />
-              <span class="text-caption text-grey-7">{{ formatCount(publication.comments_count) }}</span>
+              <q-icon name="chat_bubble_outline" size="16px" class="text-dim" />
+              <span class="text-caption text-dim">{{ formatCount(publication.comments_count) }}</span>
               <div v-if="publication.tags.length > 0" class="row q-gutter-x-xs q-ml-sm">
                 <q-badge
                   v-for="tag in publication.tags"
                   :key="tag.id"
-                  outline
-                  color="grey-7"
+                  class="tag-badge q-mx-xs"
                   :label="tag.name"
-                  class="q-mx-xs"
                 />
               </div>
             </div>
@@ -103,7 +101,7 @@
         </q-form>
 
         <div v-else class="text-caption q-mb-lg">
-          <router-link to="/login" style="color: #159be0">Войдите</router-link>,
+          <router-link to="/login" class="text-link">Войдите</router-link>,
           чтобы комментировать и голосовать.
         </div>
 
@@ -117,7 +115,7 @@
           @delete="deleteComment"
         />
 
-        <div v-if="comments.length === 0" class="text-grey text-center q-py-lg">
+        <div v-if="comments.length === 0" class="text-dim text-center q-py-lg">
           Комментариев пока нет — будьте первым!
         </div>
       </q-card>

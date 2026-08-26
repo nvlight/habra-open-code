@@ -9,7 +9,7 @@
             data-testid="karma-vote"
             @vote="voteKarma"
           />
-          <div class="text-caption text-grey">карма</div>
+          <div class="text-caption text-dim">карма</div>
         </div>
 
         <div class="col-auto">
@@ -20,8 +20,8 @@
 
         <div class="col">
           <div class="text-h6 text-weight-bold">{{ profile.name }}</div>
-          <div class="text-caption text-grey">@{{ profile.login }}</div>
-          <div v-if="profile.location" class="text-caption text-grey q-mt-xs">
+          <div class="text-caption text-dim">@{{ profile.login }}</div>
+          <div v-if="profile.location" class="text-caption text-dim q-mt-xs">
             <q-icon name="place" size="13px" /> {{ profile.location }}
           </div>
           <p v-if="profile.about" class="text-body2 q-mt-sm q-mb-none">{{ profile.about }}</p>
@@ -30,10 +30,8 @@
             <q-badge
               v-for="badge in profile.badges"
               :key="badge.id"
-              color="grey-3"
-              text-color="dark"
+              class="tag-badge q-mx-xs"
               :label="badge.name"
-              class="q-mx-xs"
             >
               <q-tooltip>{{ badge.description }}</q-tooltip>
             </q-badge>
@@ -48,19 +46,19 @@
         <div class="col-auto row q-gutter-x-md text-center">
           <div>
             <div class="text-weight-bold">{{ formatCount(profile.publications_count) }}</div>
-            <div class="text-caption text-grey">публикаций</div>
+            <div class="text-caption text-dim">публикаций</div>
           </div>
           <div>
             <div class="text-weight-bold">{{ formatCount(profile.comments_count) }}</div>
-            <div class="text-caption text-grey">комментариев</div>
+            <div class="text-caption text-dim">комментариев</div>
           </div>
           <div>
             <div class="text-weight-bold">{{ formatCount(profile.followers_count) }}</div>
-            <div class="text-caption text-grey">подписчиков</div>
+            <div class="text-caption text-dim">подписчиков</div>
           </div>
           <div>
             <div class="text-weight-bold">{{ profile.rating }}</div>
-            <div class="text-caption text-grey">рейтинг</div>
+            <div class="text-caption text-dim">рейтинг</div>
           </div>
         </div>
 
@@ -77,7 +75,7 @@
       align="left"
       active-color="primary"
       indicator-color="primary"
-      class="bg-white habr-card q-mb-md"
+      class="habr-card panel-card q-mb-md"
       style="border-radius: 4px"
     >
       <q-tab name="publications" label="Публикации" />
@@ -115,8 +113,8 @@
           class="row items-center justify-between q-py-sm"
           style="color: inherit"
         >
-          <span>{{ userItem.name }} <span class="text-grey text-caption">@{{ userItem.login }}</span></span>
-          <q-badge outline color="grey-7" :label="`рейтинг ${userItem.rating}`" />
+          <span>{{ userItem.name }} <span class="text-dim text-caption">@{{ userItem.login }}</span></span>
+          <q-badge class="tag-badge" :label="`рейтинг ${userItem.rating}`" />
         </router-link>
         <EmptyNote v-if="userList.length === 0" :text="tab === 'followers' ? 'Подписчиков нет' : 'Ни на кого не подписан'" />
       </q-card>

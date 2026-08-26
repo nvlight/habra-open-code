@@ -7,7 +7,7 @@
       align="left"
       active-color="primary"
       indicator-color="primary"
-      class="bg-white habr-card q-mb-md"
+      class="habr-card panel-card q-mb-md"
       style="border-radius: 4px"
     >
       <q-tab name="new" label="Новые" />
@@ -56,7 +56,7 @@
     <template v-else>
       <PublicationCard v-for="publication in publications" :key="publication.id" :publication="publication" />
 
-      <q-card v-if="publications.length === 0" flat class="habr-card q-pa-xl text-center text-grey">
+      <q-card v-if="publications.length === 0" flat class="habr-card q-pa-xl text-center text-dim">
         Ничего не найдено
       </q-card>
     </template>
@@ -67,7 +67,7 @@
         :max="meta.last_page"
         direction-links
         boundary-numbers
-        color="grey-8"
+        
         active-color="primary"
       />
     </div>

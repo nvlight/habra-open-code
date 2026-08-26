@@ -67,7 +67,7 @@
 
     <q-card-section class="text-caption text-center">
       Уже есть аккаунт?
-      <router-link to="/login" style="color: #159be0">Войдите</router-link>
+      <router-link to="/login" class="text-link">Войдите</router-link>
     </q-card-section>
   </q-card>
 </template>

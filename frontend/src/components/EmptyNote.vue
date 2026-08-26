@@ -1,5 +1,5 @@
 <template>
-  <div class="text-grey text-center q-pa-xl">{{ text }}</div>
+  <div class="text-dim text-center q-pa-xl">{{ text }}</div>
 </template>
 
 <script setup lang="ts">
