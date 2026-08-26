@@ -23,16 +23,7 @@ class CertCheck extends Command
             return self::FAILURE;
         }
 
-        $validTo = $cert['validTo_time_tm'];
-
-        $expiresAt = mktime(
-            (int) $validTo['tm_hour'],
-            (int) $validTo['tm_min'],
-            (int) $validTo['tm_sec'],
-            (int) $validTo['tm_mon'] + 1,
-            (int) $validTo['tm_mday'],
-            (int) $validTo['tm_year'] + 1900
-        );
+        $expiresAt = (int) $cert['validTo_time_t'];
 
         $daysLeft = (int) floor(($expiresAt - time()) / 86400);
 
