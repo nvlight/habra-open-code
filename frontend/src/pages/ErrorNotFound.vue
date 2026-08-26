@@ -1,23 +1,11 @@
 <template>
-  <div class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center">
-    <div>
-      <div style="font-size: 30vh">
-        404
-      </div>
-
-      <div class="text-h2" style="opacity:.4">
-        Oops. Nothing here...
-      </div>
-
-      <q-btn
-        class="q-mt-xl"
-        color="white"
-        text-color="blue"
-        unelevated
-        to="/"
-        label="Go Home"
-        no-caps
-      />
+  <div class="tm-page-width" style="padding-top: 40px">
+    <div class="tm-404">
+      <div class="tm-404__code">404</div>
+      <div class="tm-404__message">Такой страницы не существует</div>
+      <router-link to="/articles" class="tm-filter-chip tm-filter-chip--active" style="margin-top: 24px; text-decoration: none; display: inline-block">
+        Вернуться на главную
+      </router-link>
     </div>
   </div>
 </template>

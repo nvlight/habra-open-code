@@ -1,16 +1,16 @@
 // Quasar SCSS variables + Habra Open Code design tokens
 // Values extracted from habr.com official theme CSS (light-v2 / dark-v2)
 
-$primary:   hsl(200, 34%, 50%);  // accent-primary
-$secondary: hsl(76, 100%, 33%);  // accent-positive
-$accent:    hsl(30, 96%, 49%);   // label-sorbus — brand orange
+$primary:   hsl(200, 34%, 50%);
+$secondary: hsl(76, 100%, 33%);
+$accent:    hsl(30, 96%, 49%);
 
 $dark:      hsl(0, 0%, 15%);
 $dark-page: hsl(0, 0%, 3%);
 
-$positive:  hsl(140, 50%, 52%);  // complexity-low
-$negative:  hsl(0, 58%, 56%);    // accent-danger
-$info:      hsl(200, 70%, 58%);  // complexity-medium
+$positive:  hsl(140, 50%, 52%);
+$negative:  hsl(0, 58%, 56%);
+$info:      hsl(200, 70%, 58%);
 $warning:   hsl(30, 96%, 49%);
 
 :root {
@@ -20,7 +20,9 @@ $warning:   hsl(30, 96%, 49%);
   --habr-bg-page: hsl(0, 0%, 97%);
   --habr-bg-card: hsl(0, 0%, 100%);
   --habr-bg-subtle: hsl(0, 0%, 94%);
+  --habr-bg-gray: hsl(0, 0%, 94%);
   --habr-border: rgba(0, 0, 0, 0.09);
+  --habr-border-strong: rgba(0, 0, 0, 0.15);
   --habr-link: hsl(200, 34%, 50%);
   --habr-link-hover: hsl(200, 43%, 39%);
   --habr-accent-orange: hsl(30, 96%, 49%);
@@ -31,16 +33,24 @@ $warning:   hsl(30, 96%, 49%);
   --habr-header-text: hsl(0, 0%, 100%);
   --habr-header-muted: hsl(210, 14%, 72%);
   --habr-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --habr-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --habr-complexity-low: hsl(140, 50%, 52%);
+  --habr-complexity-medium: hsl(200, 70%, 58%);
+  --habr-complexity-high: hsl(350, 80%, 68%);
+  --habr-sidebar-width: 300px;
+  --habr-page-width: 1100px;
 }
 
 body.body--dark {
   --habr-text-main: hsl(0, 0%, 87%);
   --habr-text-secondary: hsl(0, 0%, 67%);
   --habr-text-inactive: hsl(0, 0%, 55%);
-  --habr-bg-page: hsl(0, 0%, 15%);
+  --habr-bg-page: hsl(0, 0%, 12%);
   --habr-bg-card: hsl(0, 0%, 9%);
-  --habr-bg-subtle: hsl(0, 0%, 12%);
+  --habr-bg-subtle: hsl(0, 0%, 15%);
+  --habr-bg-gray: hsl(0, 0%, 15%);
   --habr-border: rgba(255, 255, 255, 0.09);
+  --habr-border-strong: rgba(255, 255, 255, 0.15);
   --habr-link: hsl(200, 80%, 61%);
   --habr-link-hover: hsl(199, 100%, 75%);
   --habr-accent-orange: hsl(30, 100%, 63%);
@@ -51,4 +61,5 @@ body.body--dark {
   --habr-header-text: hsl(0, 0%, 100%);
   --habr-header-muted: hsl(0, 0%, 65%);
   --habr-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --habr-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.3);
 }

@@ -1,22 +1,95 @@
 <template>
   <div>
     <template v-if="loading">
-      <q-card flat class="habr-card q-pa-lg">
-        <q-skeleton type="text" width="60%" />
-        <q-skeleton type="text" width="90%" class="q-mt-sm" />
-        <q-skeleton type="rect" height="120px" class="q-mt-md" />
-      </q-card>
+      <div class="tm-skeleton-card">
+        <div class="tm-skeleton-line tm-skeleton-line--40"></div>
+        <div class="tm-skeleton-line tm-skeleton-line--80"></div>
+        <div class="tm-skeleton-line tm-skeleton-line--100"></div>
+        <div class="tm-skeleton-line tm-skeleton-line--60"></div>
+      </div>
     </template>
 
-    <q-card v-else-if="notFound" flat class="habr-card q-pa-xl text-center">
+    <div v-else-if="notFound" class="tm-empty">
       <div class="text-h6">Публикация не найдена</div>
-      <q-btn flat color="primary" label="Вернуться в ленту" to="/" class="q-mt-md" />
-    </q-card>
+      <router-link to="/articles" class="text-link">Вернуться в ленту</router-link>
+    </div>
 
     <template v-else-if="publication">
-      <q-card flat class="habr-card q-pa-md q-mb-md">
-        <div class="row q-gutter-x-sm">
-          <div class="col-auto">
+      <!-- Article header -->
+      <div class="tm-article-page__header">
+        <!-- Type label -->
+        <div class="tm-article-page__meta">
+          <span class="tm-publication-type" :class="`tm-publication-type--${publication.type}`">
+            {{ publication.type_label }}
+          </span>
+          <span v-if="publication.label_label" class="tm-label" :class="`tm-label--${publication.label}`">
+            {{ publication.label_label }}
+          </span>
+          <span v-if="publication.difficulty_label" class="tm-stats__item" :class="`tm-stats__complexity--${publication.difficulty}`">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <circle cx="12" cy="12" r="5"/>
+            </svg>
+            {{ publication.difficulty_label }}
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="tm-title tm-title_h1">
+          <span class="tm-title__link">{{ publication.title }}</span>
+        </h1>
+
+        <!-- Author + date -->
+        <div class="tm-article-snippet__meta" style="margin-top: 12px">
+          <div class="tm-article-snippet__author">
+            <router-link :to="`/users/${publication.author.login}`">
+              <span
+                class="tm-article-snippet__avatar"
+                :style="{ backgroundColor: avatarColor }"
+              >{{ initial }}</span>
+            </router-link>
+            <router-link
+              :to="`/users/${publication.author.login}`"
+              class="tm-article-snippet__username"
+            >{{ publication.author.name }}</router-link>
+          </div>
+          <span v-if="publication.published_at" class="tm-article-snippet__datetime">
+            {{ formatDate(publication.published_at) }}
+          </span>
+          <span v-if="publication.reading_time" class="tm-stats__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            {{ publication.reading_time }} мин чтения
+          </span>
+          <span v-if="publication.views_count" class="tm-stats__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            {{ formatCount(publication.views_count) }}
+          </span>
+        </div>
+
+        <!-- Hubs -->
+        <div v-if="publication.hubs.length > 0" class="tm-publication-hubs" style="margin-top: 12px">
+          <template v-for="(hub, idx) in publication.hubs" :key="hub.id">
+            <router-link :to="`/hubs/${hub.alias}`" class="tm-publication-hub__link">{{ hub.name }}</router-link>
+            <span v-if="idx < publication.hubs.length - 1" class="tm-publication-hub__separator">·</span>
+          </template>
+        </div>
+
+        <!-- Lead -->
+        <p v-if="publication.lead" class="pub-lead" style="margin-top: 12px; font-size: 16px">{{ publication.lead }}</p>
+      </div>
+
+      <!-- Article body -->
+      <div class="tm-article-page__body" style="background: var(--habr-bg-card); padding: 20px; border-radius: 0 0 4px 4px; margin-bottom: 2px">
+        <div class="publication-body" v-html="publication.body ?? ''" />
+      </div>
+
+      <!-- Actions bar -->
+      <div style="background: var(--habr-bg-card); padding: 16px 20px; border-radius: 0 0 4px 4px; margin-bottom: 16px">
+        <div class="tm-data-icons">
+          <div class="tm-data-icons__item">
             <VoteArrows
               :rating="publication.rating"
               :my-vote="myVote"
@@ -24,63 +97,36 @@
               @vote="votePublication"
             />
           </div>
-
-          <div class="col">
-            <div class="row items-center q-gutter-x-sm q-mb-xs">
-              <span class="badge-type">{{ publication.type_label }}</span>
-              <span v-if="publication.label_label" class="badge-type badge-type--green">{{ publication.label_label }}</span>
-              <span v-if="publication.difficulty_label" class="badge-type">{{ publication.difficulty_label }}</span>
-            </div>
-
-            <h1 class="text-h5 text-weight-bold q-my-sm">{{ publication.title }}</h1>
-
-            <p v-if="publication.lead" class="text-body2 text-dim">{{ publication.lead }}</p>
-
-            <div class="pub-meta">
-              <span>{{ publication.author.name }}</span>
-              <span
-                v-for="item in publication.hubs"
-                :key="item.id"
-              >· {{ item.name }}</span>
-              <span>· {{ publication.reading_time }} мин</span>
-              <span>· {{ formatCount(publication.views_count) }} просмотров</span>
-              <span v-if="publication.published_at">· {{ formatDate(publication.published_at) }}</span>
-            </div>
-
-            <q-separator class="q-my-md" />
-
-            <div class="publication-body" v-html="publication.body ?? ''" />
-
-            <div class="row items-center q-mt-md q-gutter-x-sm">
-              <q-btn
-                flat dense no-caps size="sm"
-                :icon="bookmarked ? 'bookmark' : 'bookmark_border'"
-                :label="`В закладки · ${formatCount(publication.bookmarks_count)}`"
-                :color="bookmarked ? 'accent' : undefined"
-                data-testid="bookmark"
-                @click="toggleBookmark"
-              />
-              <q-icon name="chat_bubble_outline" size="16px" class="text-dim" />
-              <span class="text-caption text-dim">{{ formatCount(publication.comments_count) }}</span>
-              <div v-if="publication.tags.length > 0" class="row q-gutter-x-xs q-ml-sm">
-                <q-badge
-                  v-for="tag in publication.tags"
-                  :key="tag.id"
-                  class="tag-badge q-mx-xs"
-                  :label="tag.name"
-                />
-              </div>
-            </div>
+          <div class="tm-data-icons__item" data-testid="bookmark" @click="toggleBookmark">
+            <svg viewBox="0 0 24 24" :fill="bookmarked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+            </svg>
+            <span>{{ formatCount(publication.bookmarks_count) }}</span>
+          </div>
+          <div class="tm-data-icons__item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+            </svg>
+            <span>{{ formatCount(publication.comments_count) }}</span>
           </div>
         </div>
-      </q-card>
 
-      <q-card flat class="habr-card q-pa-md">
-        <div class="text-subtitle1 text-weight-medium q-mb-md">
-          Комментарии · {{ comments.length }}
+        <!-- Tags -->
+        <div v-if="publication.tags.length > 0" class="tm-article-page__tags">
+          <router-link
+            v-for="tag in publication.tags"
+            :key="tag.id"
+            :to="`/articles?tag=${tag.name}`"
+            class="tm-tag"
+          >{{ tag.name }}</router-link>
         </div>
+      </div>
 
-        <q-form v-if="auth.isLoggedIn" class="q-mb-lg" @submit.prevent="submitComment(null)">
+      <!-- Comments -->
+      <div class="tm-comments">
+        <h2 class="tm-comments__title">Комментарии · {{ comments.length }}</h2>
+
+        <div v-if="auth.isLoggedIn" class="tm-comments__form">
           <q-input
             v-model="newCommentBody"
             type="textarea"
@@ -94,15 +140,14 @@
             color="primary"
             no-caps
             label="Отправить"
-            type="submit"
             class="q-mt-sm"
             :loading="postingComment"
+            @click="submitComment(null)"
           />
-        </q-form>
+        </div>
 
-        <div v-else class="text-caption q-mb-lg">
-          <router-link to="/login" class="text-link">Войдите</router-link>,
-          чтобы комментировать и голосовать.
+        <div v-else class="tm-comments__login-hint">
+          <router-link to="/login" class="text-link">Войдите</router-link>, чтобы комментировать и голосовать.
         </div>
 
         <CommentTree
@@ -115,16 +160,16 @@
           @delete="deleteComment"
         />
 
-        <div v-if="comments.length === 0" class="text-dim text-center q-py-lg">
+        <div v-if="comments.length === 0" class="tm-comments__empty">
           Комментариев пока нет — будьте первым!
         </div>
-      </q-card>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '@/boot/axios';
 import { Notify } from 'quasar';
 import type { Comment, Publication, VoteResult } from '@/types/api';
@@ -134,34 +179,38 @@ import { formatCount, formatDate } from '@/utils/format';
 import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps<{ id: string }>();
-
 const auth = useAuthStore();
 
 const publication = ref<Publication | null>(null);
 const comments = ref<Comment[]>([]);
 const loading = ref(true);
 const notFound = ref(false);
-
 const myVote = ref<number | null>(null);
 const bookmarked = ref(false);
 const myCommentVotes = ref(new Map<number, number>());
-
 const newCommentBody = ref('');
 const postingComment = ref(false);
 
+const initial = computed(() => publication.value?.author.name?.charAt(0).toUpperCase() ?? '?');
+
+const avatarColor = computed(() => {
+  const colors = [
+    'hsl(200, 34%, 50%)', 'hsl(140, 50%, 40%)', 'hsl(30, 96%, 45%)',
+    'hsl(270, 50%, 50%)', 'hsl(350, 60%, 50%)', 'hsl(190, 60%, 40%)',
+  ];
+  const login = publication.value?.author.login ?? '';
+  const hash = login.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+});
+
 function removeComment(list: Comment[], target: Comment): boolean {
   const index = list.findIndex((c) => c.id === target.id);
-  if (index !== -1) {
-    list.splice(index, 1);
-    return true;
-  }
-
+  if (index !== -1) { list.splice(index, 1); return true; }
   return list.some((c) => removeComment(c.replies, target));
 }
 
 async function load(): Promise<void> {
   loading.value = true;
-
   try {
     const [pubResponse, commentsResponse] = await Promise.all([
       api.get<{ data: Publication }>(`/publications/${props.id}`),
@@ -171,22 +220,15 @@ async function load(): Promise<void> {
     comments.value = Array.isArray(commentsResponse.data.data) ? commentsResponse.data.data : [];
   } catch (error) {
     const status = (error as { response?: { status?: number } }).response?.status;
-    if (status === 404) {
-      notFound.value = true;
-    }
+    if (status === 404) notFound.value = true;
   } finally {
     loading.value = false;
   }
 }
 
 async function votePublication(value: number): Promise<void> {
-  if (!auth.isLoggedIn) {
-    Notify.create({ type: 'warning', message: 'Войдите, чтобы голосовать' });
-    return;
-  }
-
+  if (!auth.isLoggedIn) { Notify.create({ type: 'warning', message: 'Войдите, чтобы голосовать' }); return; }
   const { data } = await api.post<VoteResult>(`/publications/${props.id}/vote`, { value });
-
   if (publication.value !== null) {
     publication.value.rating = data.rating;
     publication.value.votes_up = data.votes_up ?? publication.value.votes_up;
@@ -196,14 +238,9 @@ async function votePublication(value: number): Promise<void> {
 }
 
 async function voteComment(comment: Comment, value: number): Promise<void> {
-  if (!auth.isLoggedIn) {
-    Notify.create({ type: 'warning', message: 'Войдите, чтобы голосовать' });
-    return;
-  }
-
+  if (!auth.isLoggedIn) { Notify.create({ type: 'warning', message: 'Войдите, чтобы голосовать' }); return; }
   const { data } = await api.post<{ rating: number }>(`/comments/${comment.id}/vote`, { value });
   comment.rating = data.rating;
-
   if (myCommentVotes.value.get(comment.id) === value) {
     myCommentVotes.value.delete(comment.id);
   } else {
@@ -212,72 +249,42 @@ async function voteComment(comment: Comment, value: number): Promise<void> {
 }
 
 async function toggleBookmark(): Promise<void> {
-  if (!auth.isLoggedIn) {
-    Notify.create({ type: 'warning', message: 'Войдите, чтобы добавлять в закладки' });
-    return;
-  }
-
+  if (!auth.isLoggedIn) { Notify.create({ type: 'warning', message: 'Войдите, чтобы добавлять в закладки' }); return; }
   await api[bookmarked.value ? 'delete' : 'post'](`/publications/${props.id}/bookmark`);
   bookmarked.value = !bookmarked.value;
-
   if (publication.value !== null) {
     publication.value.bookmarks_count += bookmarked.value ? 1 : -1;
   }
-
-  Notify.create({
-    type: 'positive',
-    message: bookmarked.value ? 'Добавлено в закладки' : 'Удалено из закладок'
-  });
+  Notify.create({ type: 'positive', message: bookmarked.value ? 'Добавлено в закладки' : 'Удалено из закладок' });
 }
 
 async function submitComment(parent: Comment | null): Promise<void> {
   const body = parent === null ? newCommentBody.value.trim() : '';
-
-  if (body === '') {
-    return;
-  }
-
+  if (body === '') return;
   postingComment.value = true;
-
   try {
     const { data } = await api.post<{ data: Comment }>(`/publications/${props.id}/comments`, { body });
     const created = data.data;
-
-    if (created.replies === undefined) {
-      created.replies = [];
-    }
+    if (created.replies === undefined) created.replies = [];
     comments.value.unshift(created);
-
     newCommentBody.value = '';
-    if (publication.value !== null) {
-      publication.value.comments_count += 1;
-    }
+    if (publication.value !== null) publication.value.comments_count += 1;
   } finally {
     postingComment.value = false;
   }
 }
 
 async function addReply(parent: Comment, body: string): Promise<void> {
-  const { data } = await api.post<{ data: Comment }>(`/publications/${props.id}/comments`, {
-    body,
-    parent_id: parent.id
-  });
+  const { data } = await api.post<{ data: Comment }>(`/publications/${props.id}/comments`, { body, parent_id: parent.id });
   const created = data.data;
-
-  if (created.replies === undefined) {
-    created.replies = [];
-  }
+  if (created.replies === undefined) created.replies = [];
   parent.replies.push(created);
-
-  if (publication.value !== null) {
-    publication.value.comments_count += 1;
-  }
+  if (publication.value !== null) publication.value.comments_count += 1;
 }
 
 async function deleteComment(comment: Comment): Promise<void> {
   await api.delete(`/comments/${comment.id}`);
   removeComment(comments.value, comment);
-
   if (publication.value !== null && publication.value.comments_count > 0) {
     publication.value.comments_count -= 1;
   }
