@@ -84,12 +84,16 @@ The dev container joins the Sail network and proxies `/api` to `http://laravel.t
 - **Tests & auth**: within one test method Sanctum's `RequestGuard` memoizes the user across requests. After revoking a token call `$this->app->make('auth')->forgetGuards()` before asserting 401.
 - **Mass assignment**: counter columns are not fillable; use `forceFill()` when setting them in tests/seeds.
 - **Registration flag lives in cache**: `registration:disable/enable` store the flag via `Cache::forever`. Running `cache:clear` / `optimize:clear` silently re-enables registration — re-run the command after clearing the cache.
+- **Legacy docker builder + unreadable context files**: without the buildx plugin the legacy builder aborts the whole build when the context contains unreadable files (root-owned `letsencrypt/archive/*.pem` after a renewal). `.dockerignore` at the repo root keeps `docker/prod/letsencrypt`, `.env`, `.git` and `vendor` out of the context — never remove those lines, also because `COPY . .` would otherwise bake secrets into images.
+- **`.env` vs config cache**: if `bootstrap/cache/config.php` exists in the container, `.env` edits are ignored until it is deleted and `config:clear` runs. Verify with `php artisan config:show`.
 - Faker `unique()->word()` overflows fast in seeders — dedupe tags via `firstOrCreate(['name' => fake()->word()])`.
 
 ### Frontend
 
 - **vue-router 4+**: custom regexes in paths (`:id(\d+)`) are not supported — use plain params.
 - **Quasar scaffold aliases**: generated code imports via `@/…`; mixing legacy `src/`/bare paths breaks Vite resolution.
+- **Prod build is stricter than dev**: Vite dev tolerates duplicate attributes and unresolved imports until the page is opened, but `quasar build` (Rolldown) fails the whole bundle. Run a prod build or at least `vue-tsc` before pushing.
+- **Quasar palette class collisions**: `.text-secondary` etc. are generated from the palette (`$secondary` = green here). Custom semantic classes must not reuse palette names — the project uses `.text-dim`, `.text-link`, `.panel-card`.
 - **Dockerfile build**: `npm ci` must run with `--ignore-scripts` — the `quasar prepare` postinstall fails before `quasar.config.ts` is copied into the layer.
 - **Playwright on Alpine**: install system chromium (`apk add chromium`) and point Playwright at it via `CHROMIUM_PATH`; do not pull the multi-GB official image.
 

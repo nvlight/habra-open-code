@@ -8,7 +8,8 @@ A full-stack clone of the core [habr.com](https://habr.com) experience — publi
 |---|---|
 | [`docs/domain.md`](docs/domain.md) | Domain model: entities, ER diagram, enums, business rules |
 | [`docs/api.md`](docs/api.md) | Full reference for every endpoint with examples |
-| [`frontend/README.md`](frontend/README.md) | Frontend workflow: dev container, tests, build |
+| [`docs/deployment.md`](docs/deployment.md) | Production topology, TLS lifecycle, monitoring, troubleshooting |
+| [`frontend/README.md`](frontend/README.md) | Frontend workflow: dev container, tests, build, theming |
 
 ## Stack
 
@@ -118,10 +119,10 @@ Deployed via `docker-compose.prod.yml`:
 
 | Service | Role |
 |---|---|
-| `nginx` | TLS entrypoint; routes `/api` + `/up` → PHP-FPM, everything else → frontend |
-| `app` | Laravel (PHP-FPM + supervisor); Telegram logging channel for errors |
+| `nginx` | TLS entrypoint; routes `/api` + `/up` → PHP-FPM, ACME challenges → webroot volume, everything else → frontend |
+| `app` | Laravel (PHP-FPM + supervisor); Telegram logging channel for errors; daily certificate expiry check |
 | `frontend` | Node.js serving the built SPA with history-mode fallback |
 | `postgres`, `redis` | data stores |
-| `certbot` | certificate renewal |
+| `certbot` | renewal loop (webroot authenticator, shortlived 7-day certificates) |
 
-Deploy flow: push to `main` → on the server `git pull && docker compose -f docker-compose.prod.yml build app frontend && docker compose -f docker-compose.prod.yml up -d`.
+Deploy flow and operations runbook: [`docs/deployment.md`](docs/deployment.md).
