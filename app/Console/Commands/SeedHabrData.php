@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\Http;
 
 class SeedHabrData extends Command
 {
-    protected $signature = 'habr:seed {--count=50 : Number of publications to seed}';
+    protected $signature = 'habr:seed
+        {--count=50 : Number of publications per type to seed}
+        {--types=articles : Comma-separated types to seed: articles, posts, news}
+        {--append : Append to existing publications instead of replacing}';
 
     protected $description = 'Scrape publications and comments from habr.com and seed the database';
 
@@ -41,15 +44,23 @@ class SeedHabrData extends Command
     public function handle(): int
     {
         $targetCount = (int) $this->option('count');
+        $types = array_map('trim', explode(',', (string) $this->option('types')));
+        $append = $this->option('append');
 
-        $this->info('Step 1/4: Deleting existing publications...');
-        $this->deletePublications();
+        $this->info('Types: '.implode(', ', $types).' | Count: '.$targetCount.' | Append: '.($append ? 'yes' : 'no'));
 
-        $this->info('Step 2/4: Collecting article IDs from RSS feeds...');
-        $articleIds = $this->collectArticleIds($targetCount);
+        if (! $append) {
+            $this->info('Step 1/4: Deleting existing publications...');
+            $this->deletePublications();
+        } else {
+            $this->info('Step 1/4: Appending to existing publications...');
+        }
 
-        $this->info('Step 3/4: Scraping articles and comments...');
-        $articles = $this->scrapeArticles($articleIds, $targetCount);
+        $this->info('Step 2/4: Collecting IDs from RSS feeds...');
+        $allItems = $this->collectIds($types, $targetCount);
+
+        $this->info('Step 3/4: Scraping publications and comments...');
+        $articles = $this->scrapePublications($allItems);
 
         $this->info('Step 4/4: Seeding database...');
         $this->seedDatabase($articles);
@@ -68,54 +79,98 @@ class SeedHabrData extends Command
     }
 
     /**
+     * @param  list<string>  $types
+     * @return list<array{id: string, type: string}>
+     */
+    private function collectIds(array $types, int $targetCount): array
+    {
+        /** @var list<array{id: string, type: string}> $allItems */
+        $allItems = [];
+        $perType = $targetCount;
+
+        foreach ($types as $type) {
+            $ids = $this->collectIdsForType($type, $perType);
+            foreach ($ids as $id) {
+                $allItems[] = ['id' => $id, 'type' => $type];
+            }
+        }
+
+        $allItems = $this->deduplicateItems($allItems);
+        $this->line('  Total unique items to scrape: '.count($allItems));
+
+        return $allItems;
+    }
+
+    /**
      * @return list<string>
      */
-    private function collectArticleIds(int $targetCount): array
+    private function collectIdsForType(string $type, int $perType): array
     {
         $allIds = [];
 
         foreach (self::FLOWS as $flowAlias => $flowName) {
-            $this->line("  Fetching RSS for flow: {$flowName}...");
-            $rssUrl = "https://habr.com/ru/rss/flows/{$flowAlias}/articles/?fl=ru";
+            $rssUrl = "https://habr.com/ru/rss/flows/{$flowAlias}/{$type}/?fl=ru";
+            $this->line("  Fetching {$type} RSS for flow: {$flowName}...");
             $xml = $this->fetchUrl($rssUrl);
 
             if ($xml === null) {
-                $this->warn("  Failed to fetch RSS for {$flowName}");
+                $this->warn("  Failed to fetch RSS for {$flowName}/{$type}");
 
                 continue;
             }
 
-            $ids = $this->parseRssIds($xml);
-            $this->line('  Found '.count($ids)." articles in {$flowName}");
+            $ids = $this->parseRssIds($xml, $type);
+            $this->line('  Found '.count($ids)." {$type} in {$flowName}");
             $allIds = array_merge($allIds, $ids);
         }
 
         $allIds = array_unique($allIds);
-        $this->line('  Total unique articles: '.count($allIds));
-
-        $sliced = array_slice($allIds, 0, $targetCount);
-        $this->line('  Selected '.count($sliced).' articles for seeding');
+        $sliced = array_slice($allIds, 0, $perType);
+        $this->line('  Selected '.count($sliced)." {$type} for seeding");
 
         return $sliced;
     }
 
     /**
-     * @param  list<string>  $ids
+     * @param  list<array{id: string, type: string}>  $items
+     * @return list<array{id: string, type: string}>
+     */
+    private function deduplicateItems(array $items): array
+    {
+        $seen = [];
+
+        return array_filter($items, function (array $item) use (&$seen): bool {
+            $key = $item['id'];
+
+            if (isset($seen[$key])) {
+                return false;
+            }
+
+            $seen[$key] = true;
+
+            return true;
+        });
+    }
+
+    /**
+     * @param  list<array{id: string, type: string}>  $allItems
      * @return list<array{pinia: array, comments: array, rss_tags: list<string>}>
      */
-    private function scrapeArticles(array $ids, int $targetCount): array
+    private function scrapePublications(array $allItems): array
     {
         $articles = [];
-        $total = count($ids);
+        $total = count($allItems);
 
-        foreach ($ids as $i => $articleId) {
+        foreach ($allItems as $i => $item) {
+            $id = $item['id'];
+            $type = $item['type'];
             $progress = ($i + 1).'/'.$total;
-            $this->line("  [{$progress}] Fetching article {$articleId}...");
+            $this->line("  [{$progress}] Fetching {$type} {$id}...");
 
-            $html = $this->fetchUrl("https://habr.com/ru/articles/{$articleId}/");
+            $html = $this->fetchUrl("https://habr.com/ru/{$type}/{$id}/");
 
             if ($html === null) {
-                $this->warn("  Failed to fetch article {$articleId}, skipping");
+                $this->warn("  Failed to fetch {$type} {$id}, skipping");
 
                 continue;
             }
@@ -123,21 +178,21 @@ class SeedHabrData extends Command
             $pinia = $this->extractPiniaState($html);
 
             if ($pinia === null) {
-                $this->warn("  Failed to extract PINIA state for {$articleId}, skipping");
+                $this->warn("  Failed to extract PINIA state for {$type} {$id}, skipping");
 
                 continue;
             }
 
-            $articleData = $this->findArticleInPinia($pinia, $articleId);
+            $articleData = $this->findArticleInPinia($pinia, $id);
 
             if ($articleData === null) {
-                $this->warn("  Article {$articleId} not found in PINIA state, skipping");
+                $this->warn("  {$type} {$id} not found in PINIA state, skipping");
 
                 continue;
             }
 
-            $comments = $this->fetchComments($articleId);
-            $rssTags = $this->extractRssTagsFromPinia($pinia, $articleId);
+            $comments = $this->fetchComments($id);
+            $rssTags = $this->extractRssTagsFromPinia($pinia, $id);
 
             $articles[] = [
                 'pinia' => $articleData,
@@ -145,14 +200,10 @@ class SeedHabrData extends Command
                 'rss_tags' => $rssTags,
             ];
 
-            if (count($articles) >= $targetCount) {
-                break;
-            }
-
             usleep(200_000);
         }
 
-        $this->line('  Scraped '.count($articles).' articles successfully');
+        $this->line('  Scraped '.count($articles).' publications successfully');
 
         return $articles;
     }
@@ -166,7 +217,7 @@ class SeedHabrData extends Command
 
         $this->line('  Creating '.count($articles).' publications...');
 
-        foreach ($articles as $index => $article) {
+        foreach ($articles as $article) {
             $pinia = $article['pinia'];
             $commentsData = $article['comments'];
             $rssTags = $article['rss_tags'];
@@ -181,13 +232,13 @@ class SeedHabrData extends Command
 
             $tagNames = array_merge(
                 $rssTags,
-                array_column($pinia['tags'] ?? [], 'alias')
+                $this->extractTagNames($pinia)
             );
             $this->syncTags($publication, $tagNames);
 
             $this->createComments($commentsData, $publication, $admin);
 
-            $this->line("  [{$publication->id}] {$publication->title}");
+            $this->line("  [{$publication->id}] [{$publication->type->value}] {$publication->title}");
         }
 
         $this->recalculateCounters();
@@ -211,14 +262,11 @@ class SeedHabrData extends Command
     /**
      * @return list<string>
      */
-    private function parseRssIds(string $xml): array
+    private function parseRssIds(string $xml, string $type): array
     {
         $ids = [];
-        preg_match_all(
-            '/<guid[^>]*>https:\/\/habr\.com\/ru\/(?:articles|companies\/[^\/]+\/articles)\/(\d+)\//',
-            $xml,
-            $matches
-        );
+        $pattern = '/<guid[^>]*>https:\/\/habr\.com\/ru\/(?:articles|posts|news|companies\/[^\/]+\/(?:articles|posts|news))\/(\d+)\//';
+        preg_match_all($pattern, $xml, $matches);
 
         return array_unique($matches[1]);
     }
@@ -236,16 +284,16 @@ class SeedHabrData extends Command
         return is_array($decoded) ? $decoded : null;
     }
 
-    private function findArticleInPinia(array $pinia, string $articleId): ?array
+    private function findArticleInPinia(array $pinia, string $id): ?array
     {
         $articles = $pinia['articlesList']['articlesList'] ?? [];
 
-        if (isset($articles[$articleId])) {
-            return $articles[$articleId];
+        if (isset($articles[$id])) {
+            return $articles[$id];
         }
 
-        foreach ($articles as $id => $article) {
-            if ((string) $id === $articleId) {
+        foreach ($articles as $articleId => $article) {
+            if ((string) $articleId === $id) {
                 return $article;
             }
         }
@@ -275,20 +323,40 @@ class SeedHabrData extends Command
     /**
      * @return list<string>
      */
-    private function extractRssTagsFromPinia(array $pinia, string $articleId): array
+    private function extractRssTagsFromPinia(array $pinia, string $id): array
     {
         $articles = $pinia['articlesList']['articlesList'] ?? [];
 
-        if (! isset($articles[$articleId])) {
+        if (! isset($articles[$id])) {
             return [];
         }
 
-        $article = $articles[$articleId];
+        $article = $articles[$id];
         $hubs = $article['hubs'] ?? [];
 
         return array_map(
             fn (array $hub) => $hub['titleHtml'] ?? $hub['title'] ?? $hub['alias'] ?? '',
             $hubs
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractTagNames(array $pinia): array
+    {
+        $articles = $pinia['articlesList']['articlesList'] ?? [];
+        $article = reset($articles);
+
+        if ($article === false) {
+            return [];
+        }
+
+        $tags = $article['tags'] ?? [];
+
+        return array_map(
+            fn (array $tag) => $tag['titleHtml'] ?? $tag['alias'] ?? $tag['title'] ?? '',
+            $tags
         );
     }
 
@@ -367,7 +435,8 @@ class SeedHabrData extends Command
             'news' => PublicationType::News,
         ];
 
-        $type = $typeMap[$pinia['postType'] ?? ''] ?? PublicationType::Article;
+        $pubType = $pinia['publicationType'] ?? $pinia['postType'] ?? null;
+        $type = $typeMap[$pubType] ?? PublicationType::Article;
         $stats = $pinia['statistics'] ?? [];
         $publishedAt = $this->parseHabrDate($pinia['timePublished'] ?? null);
 
@@ -380,7 +449,7 @@ class SeedHabrData extends Command
             'user_id' => $author->id,
             'type' => $type,
             'status' => PublicationStatus::Published,
-            'title' => $pinia['titleHtml'] ?? 'Untitled',
+            'title' => $this->extractTitle($pinia),
             'lead' => $lead,
             'body' => $body,
             'difficulty' => $type === PublicationType::Article
@@ -419,6 +488,37 @@ class SeedHabrData extends Command
         return null;
     }
 
+    private function extractTitle(array $pinia): string
+    {
+        if (! empty($pinia['titleHtml'])) {
+            return $pinia['titleHtml'];
+        }
+
+        $preview = $pinia['previewHtml'] ?? '';
+
+        if ($preview !== '') {
+            $text = strip_tags($preview);
+            $text = preg_replace('/\s+/', ' ', $text);
+            $text = trim($text);
+
+            if ($text !== '') {
+                return mb_substr($text, 0, 500);
+            }
+        }
+
+        $schemaJson = $pinia['metadata']['schemaJsonLd'] ?? null;
+
+        if ($schemaJson !== null) {
+            $schema = json_decode(is_string($schemaJson) ? $schemaJson : '', true);
+
+            if (is_array($schema) && ! empty($schema['headline'])) {
+                return $schema['headline'];
+            }
+        }
+
+        return 'Untitled';
+    }
+
     private function estimateDifficulty(string $body): string
     {
         $length = mb_strlen(strip_tags($body));
@@ -436,7 +536,7 @@ class SeedHabrData extends Command
 
     private function guessLabel(array $pinia): string
     {
-        $title = strtolower($pinia['titleHtml'] ?? '');
+        $title = strtolower($this->extractTitle($pinia));
 
         if (str_contains($title, 'как') || str_contains($title, 'tutorial')) {
             return 'tutorial';
