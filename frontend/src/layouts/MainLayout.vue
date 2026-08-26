@@ -1,104 +1,232 @@
 <template>
-  <q-layout view="hHh lpR fFf">
-    <q-header class="habr-header" style="border-bottom: 1px solid rgba(0, 0, 0, 0.2)">
-      <div class="habr-container row items-center q-px-md" style="height: 48px">
-        <router-link to="/" class="row items-center q-mr-lg" data-testid="logo">
-          <span class="logo-mark">Х</span>
-          <span class="logo-text text-weight-bolder">Хабр</span>
-        </router-link>
+  <div class="tm-layout">
+    <!-- Header -->
+    <header class="tm-header">
+      <div class="tm-page-width">
+        <div class="tm-header__container">
+          <router-link to="/" class="tm-header__logo" data-testid="logo">
+            <span class="tm-header__logo-icon">X</span>
+            <span class="tm-header__logo-text">Хабр</span>
+          </router-link>
 
-        <nav class="row items-center q-gutter-x-sm">
-          <q-btn flat no-caps dense label="Лента" to="/" :class="$route.path === '/' ? 'nav-link nav-link--active' : 'nav-link'" />
-          <q-btn flat no-caps dense label="Хабы" to="/hubs" :class="$route.path.startsWith('/hubs') ? 'nav-link nav-link--active' : 'nav-link'" />
-          <q-btn flat no-caps dense label="Компании" to="/companies" :class="$route.path.startsWith('/companies') ? 'nav-link nav-link--active' : 'nav-link'" />
-          <q-btn flat no-caps dense label="Авторы" to="/users" :class="$route.path.startsWith('/users') ? 'nav-link nav-link--active' : 'nav-link'" />
-          <q-btn flat no-caps dense label="Закладки" to="/bookmarks" icon="bookmark_border" :class="$route.path === '/bookmarks' ? 'nav-link nav-link--active' : 'nav-link'" />
-        </nav>
+          <div class="tm-header__divider" />
 
-        <q-space />
+          <nav class="tm-header__nav">
+            <router-link
+              to="/articles"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'articles' }"
+            >Статьи</router-link>
+            <router-link
+              to="/posts"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'posts' }"
+            >Посты</router-link>
+            <router-link
+              to="/news"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'news' }"
+            >Новости</router-link>
+            <router-link
+              to="/hubs"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'hubs' }"
+            >Хабы</router-link>
+            <router-link
+              to="/companies"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'companies' }"
+            >Компании</router-link>
+            <router-link
+              to="/users"
+              class="tm-header__nav-link"
+              :class="{ 'tm-header__nav-link--active': activeTab === 'users' }"
+            >Авторы</router-link>
+          </nav>
 
-        <q-btn
-          flat dense round
-          :icon="themeIcon"
-          color="white"
-          class="q-mr-sm"
-          data-testid="theme-toggle"
-          @click="cycleTheme"
-        >
-          <q-tooltip>{{ themeLabel }}</q-tooltip>
-        </q-btn>
+          <div class="tm-header__actions">
+            <router-link
+              v-if="auth.isLoggedIn"
+              to="/editor"
+              class="tm-header__write-btn"
+              data-testid="write-btn"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                <path d="m15 5 4 4"/>
+              </svg>
+              Написать
+            </router-link>
 
-        <template v-if="auth.isLoggedIn">
-          <q-btn
-            unelevated no-caps dense color="primary"
-            label="Написать" to="/editor" icon="edit"
-            class="q-mr-md"
-          />
-          <span class="header-user cursor-pointer q-mr-sm" @click="router.push(`/users/${auth.user?.login}`)">
-            {{ auth.user?.name }}
-          </span>
-          <q-avatar size="32px" color="accent" text-color="white" class="cursor-pointer">
-            {{ initial }}
-            <q-menu>
-              <q-list style="min-width: 140px">
-                <q-item clickable v-close-popup @click="onLogout" data-testid="logout">
-                  <q-item-section>Выйти</q-item-section>
-                </q-item>
-              </q-list>
-            </q-menu>
-          </q-avatar>
-        </template>
+            <router-link
+              v-if="auth.isLoggedIn"
+              to="/bookmarks"
+              class="tm-header__action-btn"
+              data-testid="bookmarks-link"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+              </svg>
+            </router-link>
 
-        <template v-else>
-          <q-btn flat no-caps dense label="Войти" to="/login" class="nav-link" data-testid="login-link" />
-          <q-btn outline no-caps dense unelevated label="Регистрация" to="/register" class="register-btn" data-testid="register-link" />
-        </template>
+            <button
+              class="tm-header__action-btn"
+              data-testid="theme-toggle"
+              @click="cycleTheme"
+            >
+              <svg v-if="getThemePref() === 'light'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+              </svg>
+              <svg v-else-if="getThemePref() === 'dark'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+              </svg>
+              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                <path d="M12 3v1"/>
+              </svg>
+            </button>
+
+            <template v-if="auth.isLoggedIn">
+              <router-link
+                :to="`/users/${auth.user?.login}`"
+                class="tm-header__user"
+                data-testid="user-profile"
+              >
+                <span class="tm-header__user-name">{{ auth.user?.name }}</span>
+                <span class="tm-header__user-avatar">{{ initial }}</span>
+              </router-link>
+              <button class="tm-header__action-btn" data-testid="logout" @click="onLogout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
+                </svg>
+              </button>
+            </template>
+
+            <template v-else>
+              <router-link to="/login" class="tm-header__login-btn" data-testid="login-link">Войти</router-link>
+              <router-link to="/register" class="tm-header__login-btn" data-testid="register-link">Регистрация</router-link>
+            </template>
+          </div>
+        </div>
       </div>
-    </q-header>
+    </header>
 
-    <q-page-container>
-      <div class="habr-container q-py-lg q-px-md">
-        <router-view />
+    <!-- Page content -->
+    <div class="tm-page-width">
+      <div class="tm-page__wrapper">
+        <main class="tm-page__main">
+          <router-view />
+        </main>
+        <aside class="tm-page__sidebar">
+          <AppSidebar />
+        </aside>
       </div>
-    </q-page-container>
+    </div>
 
-    <q-footer class="habr-footer text-caption q-pa-md">
-      <div class="text-center">© 2026 Habra Open Code — некоммерческий клон habr.com</div>
-    </q-footer>
-  </q-layout>
+    <!-- Footer -->
+    <footer class="tm-footer">
+      <div class="tm-page-width">
+        <div class="tm-footer__grid">
+          <div>
+            <p class="tm-footer__block-title">Ваш аккаунт</p>
+            <ul class="tm-footer__list">
+              <li class="tm-footer__list-item">
+                <router-link to="/login" class="tm-footer__list-link">Войти</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/register" class="tm-footer__list-link">Регистрация</router-link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p class="tm-footer__block-title">Разделы</p>
+            <ul class="tm-footer__list">
+              <li class="tm-footer__list-item">
+                <router-link to="/articles" class="tm-footer__list-link">Статьи</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/posts" class="tm-footer__list-link">Посты</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/news" class="tm-footer__list-link">Новости</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/hubs" class="tm-footer__list-link">Хабы</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/companies" class="tm-footer__list-link">Компании</router-link>
+              </li>
+              <li class="tm-footer__list-item">
+                <router-link to="/users" class="tm-footer__list-link">Авторы</router-link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p class="tm-footer__block-title">Информация</p>
+            <ul class="tm-footer__list">
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">О проекте</span>
+              </li>
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">Для авторов</span>
+              </li>
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">Правила</span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p class="tm-footer__block-title">Услуги</p>
+            <ul class="tm-footer__list">
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">Реклама</span>
+              </li>
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">Контент-маркетинг</span>
+              </li>
+              <li class="tm-footer__list-item">
+                <span class="tm-footer__list-link">Техническая поддержка</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="tm-footer__bottom">
+          © 2026 Habra Open Code — некоммерческий клон habr.com
+        </div>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { getThemePref, setThemePref, type ThemePref } from '@/boot/theme';
+import AppSidebar from '@/components/AppSidebar.vue';
 
 const auth = useAuthStore();
+const route = useRoute();
 const router = useRouter();
 
 const initial = computed(() => auth.user?.name?.charAt(0).toUpperCase() ?? '?');
 
-const themeIcons: Record<ThemePref, string> = {
-  auto: 'brightness_auto',
-  light: 'light_mode',
-  dark: 'dark_mode'
-};
-
-const themeLabels: Record<ThemePref, string> = {
-  auto: 'Тема: как в системе',
-  light: 'Тема: светлая',
-  dark: 'Тема: тёмная'
-};
+const activeTab = computed(() => {
+  const path = route.path;
+  if (path.startsWith('/articles')) return 'articles';
+  if (path.startsWith('/posts')) return 'posts';
+  if (path.startsWith('/news')) return 'news';
+  if (path.startsWith('/hubs')) return 'hubs';
+  if (path.startsWith('/companies')) return 'companies';
+  if (path.startsWith('/users')) return 'users';
+  return '';
+});
 
 const nextTheme: Record<ThemePref, ThemePref> = {
   auto: 'light',
   light: 'dark',
   dark: 'auto'
 };
-
-const themeIcon = computed(() => themeIcons[getThemePref()]);
-const themeLabel = computed(() => themeLabels[getThemePref()]);
 
 function cycleTheme(): void {
   setThemePref(nextTheme[getThemePref()]);
@@ -113,54 +241,3 @@ async function onLogout(): Promise<void> {
   await router.push('/');
 }
 </script>
-
-<style lang="scss">
-.habr-header {
-  background: var(--habr-header-bg);
-  color: var(--habr-header-text);
-
-  .logo-mark {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: var(--habr-accent-orange);
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 17px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-  }
-
-  .logo-text {
-    font-size: 20px;
-    color: var(--habr-header-text);
-    letter-spacing: 0.3px;
-  }
-
-  .nav-link {
-    color: var(--habr-header-muted);
-
-    &:hover,
-    &--active {
-      color: var(--habr-header-text);
-    }
-  }
-
-  .register-btn {
-    color: var(--habr-header-text);
-    border-color: var(--habr-header-muted);
-  }
-
-  .header-user:hover {
-    color: #fff;
-  }
-}
-
-.habr-footer {
-  background: var(--habr-header-bg-secondary);
-  color: var(--habr-header-muted);
-}
-</style>

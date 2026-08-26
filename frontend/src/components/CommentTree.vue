@@ -1,32 +1,37 @@
 <template>
-  <div class="q-pl-none" :class="depth > 0 ? 'q-ml-xl q-pl-md' : ''">
-    <div class="row no-wrap q-gutter-x-sm">
-      <div class="col-auto">
+  <div class="tm-comment" :class="{ 'tm-comment__replies': depth > 0 }">
+    <div style="display: flex; gap: 12px">
+      <div style="flex-shrink: 0">
         <VoteArrows
-          vertical
           :rating="comment.rating"
           :my-vote="myVotes.get(comment.id) ?? null"
+          vertical
           @vote="(value) => emit('vote', comment, value)"
         />
       </div>
 
-      <div class="col">
-        <div class="pub-meta">
-          <span class="text-weight-medium text-dark">{{ comment.author?.name ?? 'Гость' }}</span>
-          <span>· {{ formatDate(comment.created_at) }}</span>
-          <template v-if="isMine">
-            <q-btn flat dense size="11px" color="negative" label="Удалить" @click="emit('delete', comment)" />
-          </template>
-          <q-btn
-            v-else-if="auth.isLoggedIn"
-            flat dense size="11px" color="primary"
-            label="Ответить"
-            data-testid="reply"
-            @click="replying = !replying"
-          />
+      <div style="flex: 1; min-width: 0">
+        <div class="tm-comment__header">
+          <router-link
+            v-if="comment.author"
+            :to="`/users/${comment.author.login}`"
+            class="tm-comment__author"
+          >{{ comment.author.name }}</router-link>
+          <span class="tm-comment__date">{{ formatDate(comment.created_at) }}</span>
         </div>
 
-        <div class="comment-body q-mt-xs">{{ comment.body }}</div>
+        <div class="tm-comment__body">{{ comment.body }}</div>
+
+        <div class="tm-comment__actions">
+          <template v-if="isMine">
+            <button class="tm-comment__delete-btn" @click="emit('delete', comment)">Удалить</button>
+          </template>
+          <template v-else-if="auth.isLoggedIn">
+            <button class="tm-comment__reply-btn" data-testid="reply" @click="replying = !replying">
+              Ответить
+            </button>
+          </template>
+        </div>
 
         <q-form v-if="replying" class="q-mt-sm" @submit.prevent="submitReply">
           <q-input
@@ -45,8 +50,6 @@
         </q-form>
       </div>
     </div>
-
-    <q-separator spaced />
 
     <CommentTree
       v-for="reply in comment.replies"
@@ -94,10 +97,7 @@ const isMine = auth.user !== null && props.comment.author !== undefined && auth.
 
 async function submitReply(): Promise<void> {
   const body = replyBody.value.trim();
-  if (body === '') {
-    return;
-  }
-
+  if (body === '') return;
   sending.value = true;
   try {
     emit('reply-added', props.comment, body);

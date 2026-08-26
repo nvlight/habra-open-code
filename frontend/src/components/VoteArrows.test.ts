@@ -13,14 +13,14 @@ describe('VoteArrows', () => {
     const wrapper = mount(VoteArrows, { props: { rating: 5, myVote: 1, static: true } });
 
     const up = wrapper.find('[data-testid="vote-up"]');
-    expect(up.classes()).toContain('vote-arrow--active-up');
+    expect(up.classes()).toContain('tm-votes-meter__btn--active-up');
   });
 
   it('marks down arrow active when myVote is -1', () => {
     const wrapper = mount(VoteArrows, { props: { rating: 5, myVote: -1, static: true } });
 
     const down = wrapper.find('[data-testid="vote-down"]');
-    expect(down.classes()).toContain('vote-arrow--active-down');
+    expect(down.classes()).toContain('tm-votes-meter__btn--active-down');
   });
 
   it('emits vote value on arrow click', async () => {
