@@ -22,7 +22,7 @@
           </div>
 
           <div v-if="company?.industries && company.industries.length > 0" class="row q-gutter-x-xs q-mt-sm">
-            <q-badge v-for="industry in company.industries" :key="industry.id" class="tag-badge" :label="industry.name" class="q-mx-xs" />
+            <q-badge v-for="industry in company.industries" :key="industry.id" class="tag-badge q-mx-xs" :label="industry.name" />
           </div>
 
           <div v-if="company?.representative" class="text-caption q-mt-sm">
