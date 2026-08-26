@@ -154,7 +154,7 @@ class SeedHabrData extends Command
 
     /**
      * @param  list<array{id: string, type: string}>  $allItems
-     * @return list<array{pinia: array, comments: array, rss_tags: list<string>}>
+     * @return list<array{pinia: array, comments: array, rss_tags: list<string>, source_url: string}>
      */
     private function scrapePublications(array $allItems): array
     {
@@ -167,7 +167,8 @@ class SeedHabrData extends Command
             $progress = ($i + 1).'/'.$total;
             $this->line("  [{$progress}] Fetching {$type} {$id}...");
 
-            $html = $this->fetchUrl("https://habr.com/ru/{$type}/{$id}/");
+            $sourceUrl = "https://habr.com/ru/{$type}/{$id}/";
+            $html = $this->fetchUrl($sourceUrl);
 
             if ($html === null) {
                 $this->warn("  Failed to fetch {$type} {$id}, skipping");
@@ -198,6 +199,7 @@ class SeedHabrData extends Command
                 'pinia' => $articleData,
                 'comments' => $comments,
                 'rss_tags' => $rssTags,
+                'source_url' => $sourceUrl,
             ];
 
             usleep(200_000);
@@ -225,7 +227,7 @@ class SeedHabrData extends Command
             $authorData = $pinia['author'] ?? null;
             $author = $this->getOrCreateUser($authorData, $admin);
 
-            $publication = $this->createPublication($pinia, $author);
+            $publication = $this->createPublication($pinia, $author, $article['source_url']);
 
             $hubAliases = array_column($pinia['hubs'] ?? [], 'alias');
             $this->syncHubs($publication, $hubAliases);
@@ -427,7 +429,7 @@ class SeedHabrData extends Command
         return $avatarUrl;
     }
 
-    private function createPublication(array $pinia, User $author): Publication
+    private function createPublication(array $pinia, User $author, string $sourceUrl): Publication
     {
         $typeMap = [
             'article' => PublicationType::Article,
@@ -440,10 +442,15 @@ class SeedHabrData extends Command
         $stats = $pinia['statistics'] ?? [];
         $publishedAt = $this->parseHabrDate($pinia['timePublished'] ?? null);
 
-        $body = $pinia['textHtml'] ?? '';
+        $rawBody = $pinia['textHtml'] ?? '';
         $lead = $this->extractLeadFromPinia($pinia);
 
-        $readingTime = max(1, (int) (mb_strlen(strip_tags($body)) / 2000));
+        $sourceTag = htmlspecialchars($sourceUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $body = '<p class="habr-source">Оригинал: <a href="'.$sourceTag.'">'.$sourceTag.'</a></p>'
+            .$rawBody
+            .'<hr><p class="habr-source">Оригинал: <a href="'.$sourceTag.'">'.$sourceTag.'</a></p>';
+
+        $readingTime = max(1, (int) (mb_strlen(strip_tags($rawBody)) / 2000));
 
         return Publication::query()->create([
             'user_id' => $author->id,
@@ -452,8 +459,9 @@ class SeedHabrData extends Command
             'title' => $this->extractTitle($pinia),
             'lead' => $lead,
             'body' => $body,
+            'source_url' => $sourceUrl,
             'difficulty' => $type === PublicationType::Article
-                ? $this->estimateDifficulty($body)
+                ? $this->estimateDifficulty($rawBody)
                 : null,
             'label' => $type === PublicationType::Article
                 ? $this->guessLabel($pinia)
