@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class CertCheck extends Command
 {
-    protected $signature = 'cert:check {--min-days=4 : Alert when fewer days remain}';
+    protected $signature = 'cert:check {--min-days=3 : Alert when fewer days remain}';
 
     protected $description = 'Check TLS certificate expiry on nginx and alert via error log (Telegram)';
 
@@ -25,7 +25,7 @@ class CertCheck extends Command
 
         $expiresAt = (int) $cert['validTo_time_t'];
 
-        $daysLeft = (int) floor(($expiresAt - time()) / 86400);
+        $daysLeft = (int) ceil(($expiresAt - time()) / 86400);
 
         if ($daysLeft < 0) {
             Log::error("TLS-сертификат ИСТЁК {$daysLeft} дн. назад — сайт недоступен по HTTPS!");

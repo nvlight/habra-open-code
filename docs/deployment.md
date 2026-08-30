@@ -59,7 +59,7 @@ docker exec app-certbot-1 openssl x509 \
 
 `php artisan cert:check` (scheduled daily at 09:00 UTC via the supervisor scheduler loop) connects to `nginx:443`, parses the served certificate and:
 
-- logs `ERROR` to the Telegram channel when < 4 days remain (`--min-days=N` to override) or the certificate is expired/unreachable;
+- logs `ERROR` to the Telegram channel when ≤ 3 days remain (matches certbot's `renew_before_expiry = 3 days`, so the alert fires only if renewal itself is failing; override with `--min-days=N`) or the certificate is expired/unreachable;
 - prints an informational line otherwise.
 
 The Telegram channel receives everything logged at `error` level through the custom `telegram` log channel (`app/Logging/TelegramHandler.php`, configured by `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` in `.env`).
