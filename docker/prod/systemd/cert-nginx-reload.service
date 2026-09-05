@@ -4,7 +4,7 @@ Wants=cert-nginx-reload.timer
 
 [Service]
 Type=oneshot
-ExecStart=/opt/app/docker/prod/reload-nginx-on-renew.sh
+ExecStart=/bin/bash /opt/app/docker/prod/reload-nginx-on-renew.sh
 
 [Install]
 WantedBy=default.target
