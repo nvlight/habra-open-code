@@ -23,15 +23,30 @@ Shared volumes: `app_storage`, `app_bootstrap`, `postgres_data`, `redis_data`, `
 
 ## Deploy flow
 
+Pushes to `main` auto-deploy via GitHub Actions (`.github/workflows/deploy.yml`):
+
 ```bash
-git push origin main                      # from the dev machine
-# on the server:
-cd /opt/app && git pull origin main
-docker compose -f docker-compose.prod.yml build app frontend
+git pull origin main
+docker compose -f docker-compose.prod.yml build
 docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+docker compose -f docker-compose.prod.yml exec -T app php artisan config:cache
+docker compose -f docker-compose.prod.yml exec -T app php artisan route:cache
+docker compose -f docker-compose.prod.yml exec -T app php artisan event:cache
+docker compose -f docker-compose.prod.yml restart app
 ```
 
 Code is baked into the images — a `git pull` without `build` changes nothing. If the build output looks suspicious, check `docker images <image> --format '{{.CreatedSince}}'`.
+
+> Why the final `restart app`? Right after `up -d`, supervisord boots the queue
+> worker and scheduler at container start. They check for a cached
+> `routes-v7.php` (which still exists in the persistent `app_bootstrap` volume)
+> and defer a `require` of it. If the subsequent `route:cache` deletes that file
+> in that narrow window, the boot dies with
+> `require(.../routes-v7.php): Failed to open stream`. The restart gives every
+> worker a boot that happens strictly *after* the caches are final, removing the
+> race. Same reasoning applies to any manual `optimize`/`route:cache` run while
+> the app is serving.
 
 ## TLS certificates (Let's Encrypt, shortlived profile)
 
