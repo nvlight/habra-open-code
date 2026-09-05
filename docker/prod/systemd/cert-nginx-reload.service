@@ -1,0 +1,10 @@
+[Unit]
+Description=Reload nginx when the TLS certificate is renewed
+Wants=cert-nginx-reload.timer
+
+[Service]
+Type=oneshot
+ExecStart=/opt/app/docker/prod/reload-nginx-on-renew.sh
+
+[Install]
+WantedBy=default.target

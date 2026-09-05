@@ -40,6 +40,18 @@ Code is baked into the images — a `git pull` without `build` changes nothing. 
 - `renew_before_expiry = 3 days` is set in `/etc/letsencrypt/renewal/5.188.31.27.conf` (inside the `letsencrypt` volume). Without it certbot would attempt renewal on every 12-hour run and hit Let's Encrypt's duplicate-certificate limit (5/week) for a 7-day certificate.
 - The renewal command in the compose entrypoint carries `--webroot -w /var/www/certbot` explicitly, so the flags survive even if the renewal conf is regenerated.
 
+### Automatic nginx reload after renewal
+
+nginx caches the certificate in memory and **keeps serving the old one** until reloaded, even though certbot writes the new cert to the shared `letsencrypt` bind mount. Renewal without a reload is the historical root cause of "certificate nearly expired" alerts (`cert:check` reads what nginx serves, so a missed reload looks like a failed renewal).
+
+The host runs a **systemd timer that reloads nginx whenever the on-disk certificate fingerprint changes**:
+
+- Script `docker/prod/reload-nginx-on-renew.sh` (run as user `dk`, who is in the `docker` group): compares the sha256 fingerprint of `live/5.188.31.27/fullchain.pem` with the last reloaded one stored in `docker/prod/.cert-reload-state`; when it changes it runs `docker compose exec nginx nginx -s reload` and records the new fingerprint.
+- Units `cert-nginx-reload.{service,timer}` (tracked in the repo at `docker/prod/systemd/`, installed at `~dk/.config/systemd/user/`) run the script every 30 min (`cert-nginx-reload.timer`, enabled, root-less thanks to `loginctl enable-linger dk`).
+- The script only records the state after a successful reload, so if nginx is briefly down (e.g. mid-deploy) it retries on the next tick.
+
+This means you should **never** need to reload nginx by hand after a renewal. When something looks off, the manual commands below are the fallback.
+
 ### Manual operations
 
 ```bash
@@ -47,12 +59,18 @@ Code is baked into the images — a `git pull` without `build` changes nothing. 
 cd /opt/app && docker compose -f docker-compose.prod.yml exec certbot \
   certbot renew --webroot -w /var/www/certbot --force-renewal
 
-# nginx caches the certificate in memory — reload after any renewal
+# nginx caches the certificate in memory — normally the systemd timer
+# (cert-nginx-reload.timer) reloads it automatically within 30 min;
+# to force immediately:
 docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
 # inspect current dates
 docker exec app-certbot-1 openssl x509 \
   -in /etc/letsencrypt/live/5.188.31.27/fullchain.pem -noout -dates
+
+# what the timer saw / did
+systemctl --user status cert-nginx-reload.timer cert-nginx-reload.service
+journalctl --user -u cert-nginx-reload.service -n 50
 ```
 
 ### Expiry monitoring
