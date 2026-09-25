@@ -31,7 +31,7 @@ class HabrAdminController extends Controller
     {
         app(HabrCrawlState::class)->start();
 
-        $limit = max(1, $request->integer('limit', 5000));
+        $limit = $request->filled('limit') ? max(1, $request->integer('limit')) : null;
 
         DispatchHabrFetchJob::dispatch(limit: $limit);
 

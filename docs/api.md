@@ -145,7 +145,7 @@ POST /api/admin/habr/fetch
 { "limit": 100000 }
 ```
 
-Starts a new session and enqueues the dispatch cascade over the remaining `pending` sources. `limit` (≥ 1, default 5000) guards the batch generation, not the total. Because it re-establishes the session, this endpoint **resumes a stopped archive**. `202` → `{ "message": "...", "queued": true, "limit": 100000 }`.
+Starts a new session and enqueues the dispatch cascade over the remaining `pending` sources. `limit` (≥ 1) is optional: when omitted the cascade drains **everything** still pending; when given, it caps the batch generation. Because it re-establishes the session, this endpoint **resumes a stopped archive**. `202` → `{ "message": "...", "queued": true, "limit": null }`.
 
 ### Stop 🔒
 

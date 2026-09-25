@@ -234,7 +234,7 @@ async function runFetch(): Promise<void> {
   busy.value.fetch = true;
   notice.value = '';
   try {
-    await api.post('/admin/habr/fetch', { limit: 5000 });
+    await api.post('/admin/habr/fetch');
     notice.value = 'Загрузка контента поставлена в очередь';
     await loadStats();
   } catch {

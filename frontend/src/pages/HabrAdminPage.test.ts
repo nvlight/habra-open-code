@@ -75,7 +75,7 @@ describe('HabrAdminPage', () => {
 
     await wrapper.find('[data-testid="admin-fetch-btn"]').trigger('click');
     await flushPromises();
-    expect(apiMock.post).toHaveBeenCalledWith('/admin/habr/fetch', { limit: 5000 });
+    expect(apiMock.post).toHaveBeenCalledWith('/admin/habr/fetch');
   });
 
   it('renders forbidden state for non-admin user', async () => {

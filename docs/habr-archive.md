@@ -97,6 +97,8 @@ HabrSource::query()->where('source_id', '>', $cursor)->pending()
 
 The offset-based predecessor stalled mid-run: it stepped 0/2000/4000… over a set that shrank while workers fetched, so an offset could run past the (now smaller) table and the cascade concluded "done" with ~22 k rows still pending. The cursor tolerates a shrinking `pending` set and never re-dispatches an id twice.
 
+A manual run without `limit` (the admin button) drains everything still pending; passing `limit=N` via the API caps a partial run — the cascade stops once the cap is consumed, leaving the rest `pending` for a later run (or the daily 03:30, which is unlimited).
+
 ## Rate limiting and failures
 
 - origin `429` → `HabrRateLimitedException`; the job re-dispatches itself with `delay(max(Retry-After, 5))` and exponential backoff (`tries = 3`, `backoff = [10, 30, 120]`). The source stays `pending`.

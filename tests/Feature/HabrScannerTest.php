@@ -188,6 +188,12 @@ it('admin can trigger discovery and fetch via queue and gets stats', function ()
     Queue::assertPushed(DispatchHabrFetchJob::class, fn (DispatchHabrFetchJob $job) => $job->limit === 100);
 
     $this->actingAs($admin, 'sanctum')
+        ->postJson('/api/admin/habr/fetch')
+        ->assertStatus(202)
+        ->assertJsonPath('limit', null);
+    Queue::assertPushed(DispatchHabrFetchJob::class, fn (DispatchHabrFetchJob $job) => $job->limit === null);
+
+    $this->actingAs($admin, 'sanctum')
         ->getJson('/api/admin/habr/stats')
         ->assertOk()
         ->assertJsonPath('total', 0)
