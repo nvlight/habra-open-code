@@ -489,24 +489,33 @@ class SeedHabrData extends Command
 
         $textHtml = $leadData['textHtml'] ?? '';
 
-        if ($textHtml !== '') {
-            return $textHtml;
+        if ($textHtml === '') {
+            return null;
         }
 
-        return null;
+        $text = strip_tags($textHtml);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+        return trim($text);
     }
 
     private function extractTitle(array $pinia): string
     {
         if (! empty($pinia['titleHtml'])) {
-            return $pinia['titleHtml'];
+            $text = strip_tags($pinia['titleHtml']);
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+            return mb_substr(trim($text), 0, 500);
         }
 
         $preview = $pinia['previewHtml'] ?? '';
 
         if ($preview !== '') {
             $text = strip_tags($preview);
-            $text = preg_replace('/\s+/', ' ', $text);
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
             $text = trim($text);
 
             if ($text !== '') {
@@ -520,7 +529,11 @@ class SeedHabrData extends Command
             $schema = json_decode(is_string($schemaJson) ? $schemaJson : '', true);
 
             if (is_array($schema) && ! empty($schema['headline'])) {
-                return $schema['headline'];
+                $text = strip_tags($schema['headline']);
+                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+                return mb_substr(trim($text), 0, 500);
             }
         }
 

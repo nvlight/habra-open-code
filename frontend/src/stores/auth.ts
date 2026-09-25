@@ -20,12 +20,14 @@ export const useAuthStore = defineStore('auth', () => {
   function setSession(newToken: string, newUser: User): void {
     token.value = newToken;
     user.value = newUser;
+    loaded.value = true;
     localStorage.setItem(TOKEN_KEY, newToken);
   }
 
   function clearSession(): void {
     token.value = null;
     user.value = null;
+    loaded.value = true;
     localStorage.removeItem(TOKEN_KEY);
   }
 
@@ -55,8 +57,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const { data } = await api.get<User>('/me');
-      user.value = data;
+      const { data } = await api.get<{ data: User }>('/me');
+      user.value = data.data;
     } catch {
       clearSession();
     } finally {

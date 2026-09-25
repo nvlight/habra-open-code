@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
                 'location' => 'Москва, Россия',
                 'email' => 'admin@habr.test',
                 'password' => Hash::make('password'),
+                'is_admin' => true,
             ]
         );
 

@@ -26,6 +26,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $location
  * @property int|null $company_id
  * @property int|null $invited_by
+ * @property bool $is_admin
  */
 #[Fillable([
     'name',
@@ -36,6 +37,7 @@ use Laravel\Sanctum\HasApiTokens;
     'company_id',
     'invited_by',
     'feed_settings',
+    'is_admin',
     'email',
     'password',
 ])]
@@ -58,6 +60,7 @@ class User extends Authenticatable
             'feed_settings' => 'array',
             'karma' => 'integer',
             'rating' => 'decimal:2',
+            'is_admin' => 'boolean',
         ];
     }
 

@@ -20,8 +20,12 @@ export default defineRouter(({ store }) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
   });
 
-  Router.beforeEach((to) => {
+  Router.beforeEach(async (to) => {
     const auth = useAuthStore(store);
+
+    if (auth.isLoggedIn && !auth.loaded) {
+      await auth.fetchMe();
+    }
 
     if (to.meta.requiresAuth === true && !auth.isLoggedIn) {
       return { path: '/login' };

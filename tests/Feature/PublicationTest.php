@@ -71,6 +71,18 @@ it('shows a single publication and counts a view', function () {
     expect($publication->refresh()->views_count)->toBe($initial + 1);
 });
 
+it('normalizes html in title and lead', function () {
+    $publication = Publication::factory()->published()->create([
+        'title' => 'Что&nbsp;подтянуть&nbsp;<b>бэкендеру</b>',
+        'lead' => '<p>Вступление&nbsp;<strong>важное</strong> &amp; <em>нужное</em></p>',
+    ]);
+
+    $this->getJson("/api/publications/{$publication->id}")
+        ->assertOk()
+        ->assertJsonPath('data.title', 'Что подтянуть бэкендеру')
+        ->assertJsonPath('data.lead', 'Вступление важное & нужное');
+});
+
 it('hides drafts from guests and shows them to the author', function () {
     $author = User::factory()->create();
     $publication = Publication::factory()->for($author, 'author')->draft()->create();

@@ -91,6 +91,72 @@ GET /api/me
 
 ---
 
+## Admin: habr.com archive 🔒
+
+Management of the offline habr.com archive (URL list + raw JSON). Only users with `is_admin = true` (seeded `admin/password`); anyone else gets `403`. The pipeline itself (queue, workers, scheduler, reboot recovery) is described in [`docs/habr-archive.md`](habr-archive.md). All endpoints reset the session where noted, so **`fetch` is also the way to resume a stopped run** — it clears the cancel flag and the dispatch cursor, then re-enqueues everything still `pending`.
+
+### Archive stats
+
+```http
+GET /api/admin/habr/stats?since=2026-01-01
+```
+
+```json
+{
+  "total": 57462,
+  "since": "2026-01-01",
+  "published_since": 41207,
+  "pending": 11740,
+  "fetched": 42040,
+  "failed": 240,
+  "excluded": 3442,
+  "by_status": { "fetched": 42040, "pending": 11740, "failed": 240, "excluded": 3442 },
+  "by_type": { "article": 32368, "news": 20469, "post": 4561, "special": 64 },
+  "is_crawling": true,
+  "cancel_requested": false,
+  "queued_at": "2026-09-25T13:27:57+00:00",
+  "last_activity": "2026-09-25T13:28:01+00:00"
+}
+```
+
+- `published_since` — rows whose real `published_at` (kek `timePublished`) ≥ `since`; grows while the crawl is in progress (those `total`/`published_since` measure different things);
+- `is_crawling` — heartbeat `last_activity` fresher than 5 min; `cancel_requested` — stop was requested.
+
+### Source list
+
+```http
+GET /api/admin/habr/urls?status=pending&type=news&since=2026-01-01&per_page=25&page=1
+```
+
+`status`: `pending` | `fetched` | `failed` | `excluded`; `type`: `article` | `news` | `post` | `special`. Standard pagination envelope, each item is `{ id, source_id, url, type, status, published_at, lastmod, http_status, attempts, content_file }`.
+
+### Discover (one-off URL collection) 🔒
+
+```http
+POST /api/admin/habr/discover
+```
+
+Starts a new session (clears cancel flag + cursor) and enqueues `DiscoverHabrUrlsJob` to (re)collect URLs from the sitemap. `202` → `{ "message": "...", "queued": true }`.
+
+### Fetch (one-off content download) 🔒
+
+```http
+POST /api/admin/habr/fetch
+{ "limit": 100000 }
+```
+
+Starts a new session and enqueues the dispatch cascade over the remaining `pending` sources. `limit` (≥ 1, default 5000) guards the batch generation, not the total. Because it re-establishes the session, this endpoint **resumes a stopped archive**. `202` → `{ "message": "...", "queued": true, "limit": 100000 }`.
+
+### Stop 🔒
+
+```http
+POST /api/admin/habr/stop
+```
+
+Sets the cancel flag and best-effort purges the RabbitMQ queue (instant stop); in-flight fetches finish their current article. Already-fetched rows are kept, the rest stay `pending` — nothing is lost. `202` → `{ "message": "...", "cancel_requested": true }`.
+
+---
+
 ## Publications
 
 A single resource for articles/posts/news. Identifier is a numeric `id` (mirroring habr.com's `/ru/articles/1072300/` numbering).

@@ -22,6 +22,7 @@ class UserResource extends JsonResource
             'karma' => $this->karma,
             'rating' => $this->rating,
             'location' => $this->location,
+            'is_admin' => (bool) $this->is_admin,
             'company' => new CompanyLiteResource($this->whenLoaded('company')),
             'badges' => BadgeResource::collection($this->whenLoaded('badges')),
             'publications_count' => $this->whenCounted('publications'),

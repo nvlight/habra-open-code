@@ -8,6 +8,8 @@ A full-stack clone of the core [habr.com](https://habr.com) experience — publi
 |---|---|
 | [`docs/domain.md`](docs/domain.md) | Domain model: entities, ER diagram, enums, business rules |
 | [`docs/api.md`](docs/api.md) | Full reference for every endpoint with examples |
+| [`docs/habr-archive.md`](docs/habr-archive.md) | habr.com archive pipeline: commands, queue, scheduler, stop/resume |
+| [`README_RU.md`](README_RU.md) · [`AGENTS_RU.md`](AGENTS_RU.md) · [`docs/domain_ru.md`](docs/domain_ru.md) · [`docs/api_ru.md`](docs/api_ru.md) · [`docs/habr-archive_ru.md`](docs/habr-archive_ru.md) · [`docs/deployment_ru.md`](docs/deployment_ru.md) · [`frontend/README_RU.md`](frontend/README_RU.md) | Russian versions of this documentation |
 | [`docs/deployment.md`](docs/deployment.md) | Production topology, TLS lifecycle, monitoring, troubleshooting |
 | [`frontend/README.md`](frontend/README.md) | Frontend workflow: dev container, tests, build, theming |
 
@@ -73,6 +75,22 @@ sail artisan migrate:fresh --seed   # rebuild DB with demo data
 sail bin pest                       # tests (64 feature tests)
 sail bin pint --dirty               # code style
 sail bin phpstan analyse            # static analysis (level 5)
+```
+
+habr.com archive commands (see [docs/habr-archive.md](docs/habr-archive.md)):
+
+```bash
+sail artisan habr:discover --since=YYYY-MM-DD   # collect the URL list from the sitemap
+sail artisan habr:fetch --limit=500             # fetch N remaining sources
+sail artisan habr:retry-failed                  # failed → pending
+sail artisan habr:count --since=YYYY-MM-DD      # exact number published since a date
+```
+
+The archive needs RabbitMQ workers + the scheduler up (they die on container restart):
+
+```bash
+docker compose exec -d laravel.test php artisan queue:work rabbitmq --sleep=3 --timeout=120   # run ×4
+docker compose exec -d laravel.test php artisan schedule:work
 ```
 
 Frontend (inside the `frontend-dev` container):

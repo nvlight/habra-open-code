@@ -18,8 +18,8 @@ class PublicationListResource extends JsonResource
             'type' => $this->type,
             'type_label' => $this->type->label(),
             'status' => $this->status,
-            'title' => $this->title,
-            'lead' => $this->lead,
+            'title' => $this->plainText($this->title) ?? '',
+            'lead' => $this->plainText($this->lead),
             'cover' => $this->cover,
             'difficulty' => $this->difficulty,
             'difficulty_label' => $this->difficulty?->label(),
@@ -42,5 +42,18 @@ class PublicationListResource extends JsonResource
             'hubs' => HubResource::collection($this->whenLoaded('hubs')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
         ];
+    }
+
+    private function plainText(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $text = strip_tags($value);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+        return trim($text);
     }
 }

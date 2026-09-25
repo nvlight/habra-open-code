@@ -5,4 +5,4 @@ parameters:
     level: 5
     paths:
         - app
-    tmpDir: build/phpstan
+    tmpDir: /tmp/phpstan

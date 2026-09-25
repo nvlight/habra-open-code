@@ -93,7 +93,7 @@
           <span>{{ formatDate(comment.created_at) }}</span>
           <span>· рейтинг {{ comment.rating > 0 ? `+${comment.rating}` : comment.rating }}</span>
         </div>
-        <div class="comment-body">{{ comment.body }}</div>
+        <div class="comment-body" v-html="sanitizeHtml(comment.body)"></div>
       </div>
       <div v-if="userComments.length === 0" class="tm-empty">Комментариев пока нет</div>
     </template>
@@ -133,6 +133,7 @@ import PublicationCard from '@/components/PublicationCard.vue';
 import SubscribeButton from '@/components/SubscribeButton.vue';
 import { usePublicationFeed } from '@/composables/usePublicationFeed';
 import { formatCount, formatDate } from '@/utils/format';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps<{ login: string }>();

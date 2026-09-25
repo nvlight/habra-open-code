@@ -39,6 +39,7 @@ describe('auth store', () => {
     expect(auth.token).toBe('test-token');
     expect(auth.user?.login).toBe('admin');
     expect(auth.isLoggedIn).toBe(true);
+    expect(auth.loaded).toBe(true);
     expect(localStorage.getItem('token')).toBe('test-token');
   });
 
@@ -61,7 +62,7 @@ describe('auth store', () => {
   it('fetchMe loads current user when token exists', async () => {
     localStorage.setItem('token', 'existing');
     apiMock.get.mockResolvedValueOnce({
-      data: { id: 1, login: 'admin', name: 'Админ', avatar: null, rating: '1' }
+      data: { data: { id: 1, login: 'admin', name: 'Админ', avatar: null, rating: '1' } }
     });
     const auth = useAuthStore();
 
@@ -69,6 +70,7 @@ describe('auth store', () => {
 
     expect(apiMock.get).toHaveBeenCalledWith('/me');
     expect(auth.user?.name).toBe('Админ');
+    expect(auth.user?.rating).toBe('1');
     expect(auth.loaded).toBe(true);
   });
 

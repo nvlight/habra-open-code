@@ -32,6 +32,11 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true }
       },
       {
+        path: 'admin',
+        component: () => import('@/pages/HabrAdminPage.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'login',
         component: () => import('@/pages/LoginPage.vue'),
         meta: { guestOnly: true }

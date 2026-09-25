@@ -1,5 +1,7 @@
 # AGENTS.md
 
+> Русская версия: [AGENTS_RU.md](AGENTS_RU.md).
+
 ## Project Overview
 
 Full-stack clone of habr.com core entities (publications, hubs, companies, social activity): **Laravel 13** JSON API + **Quasar / Vue 3 SPA** frontend.
@@ -25,7 +27,7 @@ Full-stack clone of habr.com core entities (publications, hubs, companies, socia
 
 Enums live in `app/Enums/` and are cast in models: `PublicationType`, `PublicationStatus` (draft/sandbox/published), `Difficulty`, `PublicationLabel`, `VoteSubject`, `SubscribableType`.
 
-Full docs: `docs/domain.md` (ER diagram, business rules), `docs/api.md` (all endpoints).
+Full docs: `docs/domain.md` (ER diagram, business rules), `docs/api.md` (all endpoints), `docs/habr-archive.md` (habr.com archive pipeline).
 
 ## Running
 
@@ -37,6 +39,15 @@ sail bin pest                       # tests
 sail bin pint --dirty               # style fix
 sail bin phpstan analyse            # static analysis
 ```
+
+Queue for the habr archive — no supervisor in dev; workers + scheduler are `docker compose exec -d` processes and **die on any container restart/reboot** (see `docs/habr-archive.md` for the full runbook). After `docker compose up -d` (or a power loss) restart them:
+
+```bash
+docker compose exec -d laravel.test php artisan queue:work rabbitmq --sleep=3 --timeout=120   # run ×4
+docker compose exec -d laravel.test php artisan schedule:work                                  # exactly one
+```
+
+Queue connection is passed to `queue:work` **positionally** (`rabbitmq`), there is no `--connection` option. A RabbitMQ restart empties the queue but DB `pending` rows survive — resume with a `POST /api/admin/habr/fetch` (clears cancel flag + cursor).
 
 Frontend — no host Node required; everything runs in containers:
 

@@ -20,7 +20,7 @@
           <span class="tm-comment__date">{{ formatDate(comment.created_at) }}</span>
         </div>
 
-        <div class="tm-comment__body">{{ comment.body }}</div>
+        <div class="tm-comment__body" v-html="sanitizedBody" />
 
         <div class="tm-comment__actions">
           <template v-if="isMine">
@@ -65,10 +65,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { Comment } from '@/types/api';
 import VoteArrows from '@/components/VoteArrows.vue';
 import { formatDate } from '@/utils/format';
+import { sanitizeHtml } from '@/utils/sanitize';
 import { useAuthStore } from '@/stores/auth';
 
 defineOptions({ name: 'CommentTree' });
@@ -92,6 +93,8 @@ const auth = useAuthStore();
 const replying = ref(false);
 const replyBody = ref('');
 const sending = ref(false);
+
+const sanitizedBody = computed(() => sanitizeHtml(props.comment.body));
 
 const isMine = auth.user !== null && props.comment.author !== undefined && auth.user.id === props.comment.author.id;
 

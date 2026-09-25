@@ -96,6 +96,7 @@ export interface User extends Author {
   comments_count?: number;
   followers_count?: number;
   following_count?: number;
+  is_admin?: boolean;
 }
 
 export interface AuthResponse {
@@ -173,4 +174,38 @@ export interface PublicationPayload {
   original_author: string | null;
   hubs: number[];
   tags: string[];
+}
+
+export type HabrSourceType = 'article' | 'news' | 'post' | 'special';
+export type HabrSourceStatus = 'pending' | 'fetched' | 'failed' | 'excluded';
+
+export interface HabrUrl {
+  source_id: number;
+  url: string;
+  type: HabrSourceType;
+  company_slug: string | null;
+  title: string | null;
+  status: HabrSourceStatus;
+  attempts: number;
+  http_status: number | null;
+  published_at: string | null;
+  lastmod: string | null;
+  content_file: string | null;
+  fetched_at: string | null;
+}
+
+export interface HabrStats {
+  total: number;
+  since: string;
+  published_since: number;
+  pending: number;
+  fetched: number;
+  failed: number;
+  excluded: number;
+  by_status: Record<string, number>;
+  by_type: Record<string, number>;
+  is_crawling: boolean;
+  cancel_requested: boolean;
+  queued_at: string | null;
+  last_activity: string | null;
 }

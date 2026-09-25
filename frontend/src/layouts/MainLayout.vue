@@ -69,6 +69,18 @@
               </svg>
             </router-link>
 
+            <router-link
+              v-if="auth.isLoggedIn && auth.user?.is_admin"
+              to="/admin"
+              class="tm-header__action-btn"
+              data-testid="admin-link"
+              title="Админ-панель"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="m9.09 9 3 6-3 0"/><path d="m12 15 2.91-3-2.91-6"/>
+              </svg>
+            </router-link>
+
             <button
               class="tm-header__action-btn"
               data-testid="theme-toggle"
@@ -199,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { getThemePref, setThemePref, type ThemePref } from '@/boot/theme';
@@ -231,10 +243,6 @@ const nextTheme: Record<ThemePref, ThemePref> = {
 function cycleTheme(): void {
   setThemePref(nextTheme[getThemePref()]);
 }
-
-onMounted(() => {
-  void auth.fetchMe();
-});
 
 async function onLogout(): Promise<void> {
   await auth.logout();

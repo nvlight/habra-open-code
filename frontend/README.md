@@ -1,5 +1,7 @@
 # Habra Open Code — Frontend
 
+> Русская версия: [README_RU.md](README_RU.md).
+
 Quasar 2 SPA (TypeScript) for the Habra Open Code API: feed, publications with nested comments and voting, hubs, companies, user profiles, editor, bookmarks, personal feed.
 
 ## Development

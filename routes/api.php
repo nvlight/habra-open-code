@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\HabrAdminController;
 use App\Http\Controllers\Api\HubController;
 use App\Http\Controllers\Api\PublicationCommentController;
 use App\Http\Controllers\Api\PublicationController;
@@ -69,4 +70,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('subscriptions/{type}/{key}', [SubscriptionController::class, 'unsubscribe']);
 
     Route::get('feed', FeedController::class);
+
+    Route::prefix('admin')->middleware('is_admin')->group(function (): void {
+        Route::post('habr/discover', [HabrAdminController::class, 'discover']);
+        Route::post('habr/fetch', [HabrAdminController::class, 'fetch']);
+        Route::post('habr/stop', [HabrAdminController::class, 'stop']);
+        Route::get('habr/stats', [HabrAdminController::class, 'stats']);
+        Route::get('habr/urls', [HabrAdminController::class, 'urls']);
+    });
 });
